@@ -10,3 +10,4 @@ Team:
 ## Resources
 
 ## Usage
+Our visualization can be seen [here](https://sizmw.github.io/data-vis-final/).
