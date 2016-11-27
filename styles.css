@@ -10,6 +10,10 @@ body {
   stroke: black;
 }
 
+#canvas .taxi-zone.selected path {
+  fill: red;
+}
+
 div.tooltip {
   font-size: 1em;
   position: absolute;

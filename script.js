@@ -16,7 +16,6 @@ $(function () {
 
   var canvasWidth = $('#canvas').width();
   var canvasHeight = $('#canvas').height();
-  console.log(canvasWidth, canvasHeight);
 
 
   d3.json('taxi_zones.json', function (taxiZones) {
@@ -39,6 +38,45 @@ $(function () {
         feature.geometry.coordinates = convert(feature.geometry.coordinates);
       });
 
+      taxiZones.features.forEach(function (feature) {
+        var coords = [];
+
+        function findCoords(obj) {
+          if (obj.length == 2 && !obj[0].length && !obj[1].length) {
+            coords.push(obj);
+          }
+          else {
+            for (var i = obj.length - 1; i >= 0; i--) {
+              findCoords(obj[i]);
+            }
+          }
+        }
+
+        findCoords(feature.geometry.coordinates);
+
+        feature.properties.center = [0, 0];
+        coords.forEach(function (coord) {
+          feature.properties.center[0] += coord[0];
+          feature.properties.center[1] += coord[1];
+        });
+        feature.properties.center[0] /= coords.length;
+        feature.properties.center[1] /= coords.length;
+      });
+
+      var maxZoneDistance = -Infinity;
+
+      taxiZones.features.forEach(function (feature) {
+        feature.properties.distanceData = {};
+        taxiZones.features.forEach(function (feature2) {
+          if (feature2 === feature) return;
+          var dx = feature.properties.center[0] - feature2.properties.center[0];
+          var dy = feature.properties.center[1] - feature2.properties.center[1];
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          feature.properties.distanceData[feature2.properties['LocationID']] = dist;
+          if (dist > maxZoneDistance) maxZoneDistance = dist;
+        });
+      });
+
       var geoPath = d3.geoPath(d3.geoMercator()
         // .parallels([40.4, 40.9])
         // .center([-73.919142, 40.768916])
@@ -58,7 +96,28 @@ $(function () {
         .classed('taxi-zone', true)
         .append('path')
         .attr('d', geoPath)
-        .attr('fill-opacity', function (d) { return Math.random(); });
+        .on('click', function (d) {
+          selectZone(d.properties['LocationID']);
+          d3.event.stopPropagation();
+        });
+
+      canvas.on('click', function () {
+        selectZone(null);
+      });
+
+      function selectZone(zoneID) {
+        var zones = canvas.selectAll('.taxi-zones .taxi-zone')
+          .classed('selected', function (d) {
+            return zoneID === d.properties['LocationID'];
+          });
+        zones.select('path')
+          .attr('fill-opacity', function (d) {
+            if (zoneID === null) return 0.5;
+            if (zoneID === d.properties['LocationID']) return 1.0;
+            return d.properties.distanceData[zoneID] / maxZoneDistance;
+          });
+      }
+      selectZone(null);
 
     });
   });
