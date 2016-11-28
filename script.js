@@ -19,25 +19,7 @@ $(function () {
 
 
   d3.json('taxi_zones.json', function (taxiZones) {
-    d3.text('taxi_zones.prj', function (projSpec) {
-      var coordProj = proj4(projSpec);
-
-      taxiZones.features.forEach(function (feature) {
-        function convert(obj) {
-          if (obj.length == 2 && !obj[0].length && !obj[1].length) {
-            return coordProj.inverse(obj);
-          }
-          else {
-            for (var i = obj.length - 1; i >= 0; i--) {
-              obj[i] = convert(obj[i]);
-            }
-            return obj;
-          }
-        }
-
-        feature.geometry.coordinates = convert(feature.geometry.coordinates);
-      });
-
+    d3.json('data.json', function (taxiTimes) {
       taxiZones.features.forEach(function (feature) {
         var coords = [];
 
@@ -63,19 +45,21 @@ $(function () {
         feature.properties.center[1] /= coords.length;
       });
 
-      var maxZoneDistance = -Infinity;
+      var maxTaxiTime = -Infinity;
+      var minTaxiTime = Infinity;
 
-      taxiZones.features.forEach(function (feature) {
-        feature.properties.distanceData = {};
-        taxiZones.features.forEach(function (feature2) {
-          if (feature2 === feature) return;
-          var dx = feature.properties.center[0] - feature2.properties.center[0];
-          var dy = feature.properties.center[1] - feature2.properties.center[1];
-          var dist = Math.sqrt(dx * dx + dy * dy);
-          feature.properties.distanceData[feature2.properties['LocationID']] = dist;
-          if (dist > maxZoneDistance) maxZoneDistance = dist;
+      Object.values(taxiTimes).forEach(function (zone1) {
+        Object.values(zone1).forEach(function (time) {
+          maxTaxiTime = Math.max(maxTaxiTime, time.average);
+          minTaxiTime = Math.min(minTaxiTime, time.average);
         });
       });
+
+      function getTaxiTime(zone1, zone2) {
+        if (taxiTimes[zone1] && taxiTimes[zone1][zone2]) return taxiTimes[zone1][zone2];
+        if (taxiTimes[zone2] && taxiTimes[zone2][zone1]) return taxiTimes[zone2][zone1];
+        return undefined;
+      }
 
       var geoPath = d3.geoPath(d3.geoMercator()
         // .parallels([40.4, 40.9])
@@ -96,12 +80,12 @@ $(function () {
         .classed('taxi-zone', true)
         .append('path')
         .attr('d', geoPath)
-        .on('click', function (d) {
+        .on('mouseup', function (d) {
           selectZone(d.properties['LocationID']);
           d3.event.stopPropagation();
         });
 
-      canvas.on('click', function () {
+      canvas.on('mouseup', function () {
         selectZone(null);
       });
 
@@ -114,11 +98,12 @@ $(function () {
           .attr('fill-opacity', function (d) {
             if (zoneID === null) return 0.5;
             if (zoneID === d.properties['LocationID']) return 1.0;
-            return d.properties.distanceData[zoneID] / maxZoneDistance;
+            var time = getTaxiTime(zoneID, d.properties['LocationID']);
+            if (time === undefined) return 0.0;
+            return time.average / maxTaxiTime;
           });
       }
       selectZone(null);
-
     });
   });
 
