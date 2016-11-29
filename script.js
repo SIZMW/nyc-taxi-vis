@@ -90,6 +90,15 @@ $(function () {
         .on('mouseup', function (d) {
           selectZone(d.properties['LocationID']);
           d3.event.stopPropagation();
+        })
+        .on('mouseover', function(d) {
+          tooltipZoneMouseOver(d);
+        })
+        .on('mousemove', function(d) {
+          tooltipZoneMouseMove(d);
+        })
+        .on('mouseout', function(d) {
+          tooltipMouseOut(d);
         });
 
       canvas.on('mouseup', function () {
@@ -130,6 +139,40 @@ $(function () {
             return time.average / maxTaxiTime;
           });
       }
+
+      function tooltipZoneMouseOver(d) {
+        tooltipMouseOver(d, d.properties['zone'] + ', ' + d.properties['borough'] + ' (' + d.properties['LocationID'] + ')');
+      }
+
+      function tooltipZoneMouseMove(d) {
+        tooltipMouseMove(d, d.properties['zone'] + ', ' + d.properties['borough'] + ' (' + d.properties['LocationID'] + ')');
+      }
+
+      function tooltipMouseOver(d, text) {
+        tooltip
+          .style('top', (d3.event.pageY - 20) + "px")
+          .style('left', (d3.event.pageX) + "px")
+          .text(text);
+
+        tooltip.transition()
+          .duration(200)
+          .style('opacity', 1)
+      }
+
+      function tooltipMouseMove(d, text) {
+        tooltip
+          .style('top', (d3.event.pageY - 20) + "px")
+          .style('left', (d3.event.pageX) + "px")
+          .text(text);
+      }
+
+      function tooltipMouseOut(d) {
+        tooltip
+          .transition()
+          .duration(200)
+          .style('opacity', 0)
+      }
+
       selectZone(null);
     });
   });
