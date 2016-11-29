@@ -10,8 +10,15 @@ Point = namedtuple('Point', ('x', 'y'))
 TaxiZone = namedtuple('TaxiZone', ('locID', 'polygons'))
 
 def is_point_in_zone(point, zone):
+    """
+    Determines if the specified point is within the specified zone.
+    Arguments:
+        point: The namedtuple of X and Y values.
+        zone: The taxi zone with polygon(s) to determine intersection.
+    Returns: true if within, false otherwise
+    """
     for poly in zone.polygons:
-        # https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule
+        # Referenced from https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule
         inside = False
         for i in range(len(poly)):
             p1 = poly[i]
@@ -23,6 +30,12 @@ def is_point_in_zone(point, zone):
     return False
 
 def process_zones(zones_path):
+    """
+    Opens the taxi zone file and loads the data into memory.
+    Arguments:
+        zones_path: The file path to the taxi zones file.
+    Returns: An array of zones
+    """
     with open(zones_path, 'r') as f:
         zones_json = json.load(f)
 
@@ -45,15 +58,35 @@ def process_zones(zones_path):
     return zones
 
 def file_lines(fname):
+    """
+    Counts the number of lines in the file.
+    Arguments:
+        fname: The name of the file.
+    Returns: an integer
+    """
     with open(fname) as f:
         for i, l in enumerate(f):
             pass
     return i + 1
 
 def process_data(data_folder, zones_path, output_path):
+    """
+    Process the data to convert longitude and latitude to zone IDs.
+    Arguments:
+        data_folder: The folder with all the CSV files.
+        zones_path: The file path to the taxi zone data.
+        output_path: The file path to the output file.
+    Returns: N/A
+    """
     zones = process_zones(zones_path)
 
     def get_zone_id(point):
+        """
+        Returns the zone in which the point is located.
+        Arguments:
+            point: The point to find in the zones.
+        Returns: a zone ID, or None
+        """
         for zone in zones:
             if is_point_in_zone(point, zone):
                 return zone.locID
@@ -62,6 +95,8 @@ def process_data(data_folder, zones_path, output_path):
     data_files = [os.path.join(data_folder, data_file) for data_file in os.listdir(data_folder)]
 
     print('Counting records in {:,d} files...'.format(len(data_files)))
+
+    # Estimate how many records to read
     record_count = 0
     loading_bar_init(len(data_files))
     for data_file in data_files:
@@ -70,7 +105,14 @@ def process_data(data_folder, zones_path, output_path):
     loading_bar_finish()
 
     date_formats = ('%m/%d/%Y %H:%M', '%Y-%m-%d %H:%M:%S')
+
     def parse_date(s):
+        """
+        Retuurns a datetime instance of the formatted data.
+        Arguments:
+            s: The string date.
+        Returns: a datetime
+        """
         for date_format in date_formats:
             try:
                 return datetime.strptime(s, date_format)
@@ -88,17 +130,21 @@ def process_data(data_folder, zones_path, output_path):
     for data_file in data_files:
         with open(data_file, 'r') as f:
             r = csv.reader(f)
-            next(r) # skip header
+            next(r) # Skip header
             for row in r:
+                # Stop at record limit
                 if records_processed >= record_limit: break
                 records_processed += 1
                 loading_bar_update()
+
+                # Row is not valid
                 if not row: continue
                 pickup_date = parse_date(row[1])
                 dropoff_date = parse_date(row[2])
                 pickup_loc = Point(float(row[5]), float(row[6]))
                 dropoff_loc = Point(float(row[9]), float(row[10]))
 
+                # Bad data
                 if pickup_loc == Point(0, 0): continue
                 if dropoff_loc == Point(0, 0): continue
 
@@ -107,9 +153,12 @@ def process_data(data_folder, zones_path, output_path):
 
                 pickup_zone = get_zone_id(pickup_loc)
                 dropoff_zone = get_zone_id(dropoff_loc)
+
+                # Bad data
                 if pickup_zone is None or dropoff_zone is None: continue
                 if pickup_zone == dropoff_zone: continue
 
+                # Calculate averages
                 if pickup_zone in zone_times and dropoff_zone in zone_times[pickup_zone]:
                     zone_times[pickup_zone][dropoff_zone]['average'] += trip_time
                     zone_times[pickup_zone][dropoff_zone]['count'] += 1
@@ -128,24 +177,43 @@ def process_data(data_folder, zones_path, output_path):
         for zone2 in zone_times[zone1]:
             zone_times[zone1][zone2]['average'] /= zone_times[zone1][zone2]['count']
 
+    # Write to JSON
     with open(output_path, 'w') as f:
         json.dump(zone_times, f)
 
 
 if __name__ == '__main__':
     def directory(path):
+        """
+        Returns the full path to the folder.
+        Arguments:
+            path: The path to get a full path for.
+        Returns: an OS path
+        """
         path = os.path.abspath(path)
         if not os.path.isdir(path):
             raise ValueError('path {} is not a directory'.format(path))
         return path
 
     def file(path):
+        """
+        Returns the full path to the file.
+        Arguments:
+            path: The path to get a full path for.
+        Returns: an OS path
+        """
         path = os.path.abspath(path)
         if not os.path.isfile(path):
             raise ValueError('path {} is not a file'.format(path))
         return path
 
     def writable_file(path):
+        """
+        Gets the writeable path.
+        Arguments:
+            path: The path to get a writeable path for.
+        Returns: an OS path
+        """
         path = os.path.abspath(path)
         return path
 
