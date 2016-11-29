@@ -61,7 +61,7 @@ def process_data(data_folder, zones_path, output_path):
 
     data_files = [os.path.join(data_folder, data_file) for data_file in os.listdir(data_folder)]
 
-    print('Counting records...')
+    print('Counting records in {:,d} files...'.format(len(data_files)))
     record_count = 0
     loading_bar_init(len(data_files))
     for data_file in data_files:
@@ -80,13 +80,18 @@ def process_data(data_folder, zones_path, output_path):
 
     zone_times = {}
 
-    print('Processing records...')
-    loading_bar_init(record_count)
+    record_limit = 20000
+    records_processed = 0
+
+    print('Processing {:,d} records...'.format(record_count))
+    loading_bar_init(record_limit)
     for data_file in data_files:
         with open(data_file, 'r') as f:
             r = csv.reader(f)
             next(r) # skip header
             for row in r:
+                if records_processed >= record_limit: break
+                records_processed += 1
                 loading_bar_update()
                 if not row: continue
                 pickup_date = parse_date(row[1])

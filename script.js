@@ -90,16 +90,29 @@ $(function () {
       });
 
       function selectZone(zoneID) {
+        if (taxiTimes[zoneID]) {
+          var maxTaxiTime = -Infinity;
+          Object.values(taxiTimes[zoneID]).forEach(function (time) {
+            maxTaxiTime = Math.max(maxTaxiTime, time.average);
+          });
+        }
+
         var zones = canvas.selectAll('.taxi-zones .taxi-zone')
           .classed('selected', function (d) {
             return zoneID === d.properties['LocationID'];
+          })
+          .classed('has-data', function (d) {
+            return zoneID !== null && zoneID !== d.properties['LocationID'] && getTaxiTime(zoneID, d.properties['LocationID']);
+          })
+          .classed('no-data', function (d) {
+            return zoneID !== null && zoneID !== d.properties['LocationID'] && !getTaxiTime(zoneID, d.properties['LocationID']);
           });
         zones.select('path')
           .attr('fill-opacity', function (d) {
-            if (zoneID === null) return 0.5;
+            if (zoneID === null) return 0.2;
             if (zoneID === d.properties['LocationID']) return 1.0;
             var time = getTaxiTime(zoneID, d.properties['LocationID']);
-            if (time === undefined) return 0.0;
+            if (time === undefined) return 0.2;
             return time.average / maxTaxiTime;
           });
       }
