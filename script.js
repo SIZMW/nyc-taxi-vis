@@ -1,6 +1,4 @@
 $(function () {
-
-
   // Margin amounts
   var margin = {
     top: 20,
@@ -11,23 +9,28 @@ $(function () {
   margin.width = margin.left + margin.right;
   margin.height = margin.top + margin.bottom;
 
-
   var canvas = d3.select('#canvas');
 
   var canvasWidth = $('#canvas').width();
   var canvasHeight = $('#canvas').height();
-
 
   d3.json('taxi_zones.json', function (taxiZones) {
     d3.json('data.json', function (taxiTimes) {
       taxiZones.features.forEach(function (feature) {
         var coords = [];
 
+        /**
+         * Finds the coordinates of the polygon object from the data and adds it to the coordinates property of the zone.
+         *
+         * @param obj The object to parse for the X and Y values of the polygon coordinate.
+         */
         function findCoords(obj) {
+          // Object is the point
           if (obj.length == 2 && !obj[0].length && !obj[1].length) {
             coords.push(obj);
           }
           else {
+            // Object is higher level container
             for (var i = obj.length - 1; i >= 0; i--) {
               findCoords(obj[i]);
             }
@@ -37,10 +40,13 @@ $(function () {
         findCoords(feature.geometry.coordinates);
 
         feature.properties.center = [0, 0];
+
+        // Get averaged center of polygon
         coords.forEach(function (coord) {
           feature.properties.center[0] += coord[0];
           feature.properties.center[1] += coord[1];
         });
+
         feature.properties.center[0] /= coords.length;
         feature.properties.center[1] /= coords.length;
       });
@@ -48,6 +54,7 @@ $(function () {
       var maxTaxiTime = -Infinity;
       var minTaxiTime = Infinity;
 
+      // Get smallest and largest travel time
       Object.values(taxiTimes).forEach(function (zone1) {
         Object.values(zone1).forEach(function (time) {
           maxTaxiTime = Math.max(maxTaxiTime, time.average);
@@ -55,6 +62,12 @@ $(function () {
         });
       });
 
+      /**
+       * Returns the time from one zone to another.
+       *
+       * @param zone1 The first zone.
+       * @param zone2 The second zone.
+       */
       function getTaxiTime(zone1, zone2) {
         if (taxiTimes[zone1] && taxiTimes[zone1][zone2]) return taxiTimes[zone1][zone2];
         if (taxiTimes[zone2] && taxiTimes[zone2][zone1]) return taxiTimes[zone2][zone1];
@@ -62,13 +75,7 @@ $(function () {
       }
 
       var geoPath = d3.geoPath(d3.geoMercator()
-        // .parallels([40.4, 40.9])
-        // .center([-73.919142, 40.768916])
-        // .scale(20000)
-        // .translate([canvasWidth / 2, canvasHeight / 2]);
         .fitExtent([[margin.left, margin.top], [canvasWidth - margin.width, canvasHeight - margin.height]], taxiZones));
-
-      // console.log(geoPath(taxiZones));
 
       var taxiZoneGroups = canvas.append('g')
         .classed('taxi-zones', true)
@@ -89,6 +96,11 @@ $(function () {
         selectZone(null);
       });
 
+      /**
+       * Selects a specific zone based on the ID and updates the maximum time.
+       *
+       * @param zoneID The zone being selected.
+       */
       function selectZone(zoneID) {
         if (taxiTimes[zoneID]) {
           var maxTaxiTime = -Infinity;
@@ -97,6 +109,7 @@ $(function () {
           });
         }
 
+        // Color zones based on data values
         var zones = canvas.selectAll('.taxi-zones .taxi-zone')
           .classed('selected', function (d) {
             return zoneID === d.properties['LocationID'];
@@ -107,6 +120,7 @@ $(function () {
           .classed('no-data', function (d) {
             return zoneID !== null && zoneID !== d.properties['LocationID'] && !getTaxiTime(zoneID, d.properties['LocationID']);
           });
+
         zones.select('path')
           .attr('fill-opacity', function (d) {
             if (zoneID === null) return 0.2;
@@ -120,30 +134,8 @@ $(function () {
     });
   });
 
-
-
   // Tooltip
   var tooltip = d3.select('body')
     .append('div')
     .attr('class', 'tooltip');
-
-  /**
-   * Loads the data file.
-   */
-  function loadTSV() {
-    d3.tsv('data.tsv', function(d) {
-      return d;
-    }, function(error, data) {
-
-      if (error) {
-        console.log('Read error');
-        return;
-      }
-
-      console.log(data);
-    });
-  }
-
-  // loadTSV();
-
 });
