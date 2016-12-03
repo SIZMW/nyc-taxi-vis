@@ -11,8 +11,10 @@ $(function () {
 
   var canvas = d3.select('#canvas');
 
-  var canvasWidth = $('#canvas').width();
-  var canvasHeight = $('#canvas').height();
+  var canvasWidth = $('#canvas')
+    .width();
+  var canvasHeight = $('#canvas')
+    .height();
 
   // TODO Temporary month selection
   var MONTH = 6;
@@ -31,8 +33,7 @@ $(function () {
           // Object is the point
           if (obj.length == 2 && !obj[0].length && !obj[1].length) {
             coords.push(obj);
-          }
-          else {
+          } else {
             // Object is higher level container
             for (var i = obj.length - 1; i >= 0; i--) {
               findCoords(obj[i]);
@@ -58,12 +59,14 @@ $(function () {
       var minTaxiTime = Infinity;
 
       // Get smallest and largest travel time
-      Object.values(taxiTimes).forEach(function (zone1) {
-        Object.values(zone1).forEach(function (time) {
-          maxTaxiTime = Math.max(maxTaxiTime, time[MONTH].average_time);
-          minTaxiTime = Math.min(minTaxiTime, time[MONTH].average_time);
+      Object.values(taxiTimes)
+        .forEach(function (zone1) {
+          Object.values(zone1)
+            .forEach(function (time) {
+              maxTaxiTime = Math.max(maxTaxiTime, time[MONTH].average_time);
+              minTaxiTime = Math.min(minTaxiTime, time[MONTH].average_time);
+            });
         });
-      });
 
       /**
        * Returns the time from one zone to another.
@@ -78,7 +81,10 @@ $(function () {
       }
 
       var geoPath = d3.geoPath(d3.geoMercator()
-        .fitExtent([[margin.left, margin.top], [canvasWidth - margin.width, canvasHeight - margin.height]], taxiZones));
+        .fitExtent([
+          [margin.left, margin.top],
+          [canvasWidth - margin.width, canvasHeight - margin.height]
+        ], taxiZones));
 
       var taxiZoneGroups = canvas.append('g')
         .classed('taxi-zones', true)
@@ -91,16 +97,17 @@ $(function () {
         .append('path')
         .attr('d', geoPath)
         .on('mouseup', function (d) {
+          selectedZoneID = d.properties['LocationID'];
           selectZone(d.properties['LocationID']);
           d3.event.stopPropagation();
         })
-        .on('mouseover', function(d) {
+        .on('mouseover', function (d) {
           tooltipZoneMouseOver(d);
         })
-        .on('mousemove', function(d) {
+        .on('mousemove', function (d) {
           tooltipZoneMouseMove(d);
         })
-        .on('mouseout', function(d) {
+        .on('mouseout', function (d) {
           tooltipMouseOut(d);
         });
 
@@ -116,9 +123,10 @@ $(function () {
       function selectZone(zoneID) {
         if (taxiTimes[zoneID]) {
           var maxTaxiTime = -Infinity;
-          Object.values(taxiTimes[zoneID]).forEach(function (time) {
-            maxTaxiTime = Math.max(maxTaxiTime, time[MONTH].average_time);
-          });
+          Object.values(taxiTimes[zoneID])
+            .forEach(function (time) {
+              maxTaxiTime = Math.max(maxTaxiTime, time[MONTH].average_time);
+            });
         }
 
         // Color zones based on data values
