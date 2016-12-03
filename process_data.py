@@ -139,19 +139,27 @@ def process_data(data_folder, zones_path, output_path):
 
                 # Row is not valid
                 if not row: continue
+
+                # Parse row
                 pickup_date = parse_date(row[1])
                 dropoff_date = parse_date(row[2])
                 pickup_loc = Point(float(row[5]), float(row[6]))
                 dropoff_loc = Point(float(row[9]), float(row[10]))
+                trip_base_fare = float(row[12])
+                trip_tip_amount = float(row[15])
                 trip_month = pickup_date.month
 
                 # Bad data
                 if pickup_loc == Point(0, 0): continue
                 if dropoff_loc == Point(0, 0): continue
 
+                # Parse trip time
                 trip_time = (dropoff_date - pickup_date) / timedelta(minutes=1)
+
+                # Skip unreasonably short trips
                 if trip_time < 1: continue
 
+                # Convert location coordinates to zone ID
                 pickup_zone = get_zone_id(pickup_loc)
                 dropoff_zone = get_zone_id(dropoff_loc)
 
@@ -162,25 +170,36 @@ def process_data(data_folder, zones_path, output_path):
                 # Calculate averages
                 if pickup_zone in zone_times and dropoff_zone in zone_times[pickup_zone]:
                     if trip_month not in zone_times[pickup_zone][dropoff_zone]: zone_times[pickup_zone][dropoff_zone][trip_month] = {}
-                    zone_times[pickup_zone][dropoff_zone][trip_month]['average'] += trip_time
-                    zone_times[pickup_zone][dropoff_zone][trip_month]['count'] += 1
+                    zone_times[pickup_zone][dropoff_zone][trip_month]['average_time'] += trip_time
+                    zone_times[pickup_zone][dropoff_zone][trip_month]['trip_count'] += 1
+                    zone_times[pickup_zone][dropoff_zone][trip_month]['base_fare'] += trip_base_fare
+                    zone_times[pickup_zone][dropoff_zone][trip_month]['tip_amount'] += trip_tip_amount
+                # Check for reversed dropoff and pickup areas
                 elif dropoff_zone in zone_times and pickup_zone in zone_times[dropoff_zone]:
                     if trip_month not in zone_times[dropoff_zone][pickup_zone]: zone_times[dropoff_zone][pickup_zone][trip_month] = {}
-                    zone_times[dropoff_zone][pickup_zone][trip_month]['average'] += trip_time
-                    zone_times[dropoff_zone][pickup_zone][trip_month]['count'] += 1
+                    zone_times[dropoff_zone][pickup_zone][trip_month]['average_time'] += trip_time
+                    zone_times[dropoff_zone][pickup_zone][trip_month]['trip_count'] += 1
+                    zone_times[dropoff_zone][pickup_zone][trip_month]['base_fare'] += trip_base_fare
+                    zone_times[dropoff_zone][pickup_zone][trip_month]['tip_amount'] += trip_tip_amount
+                # Neither pair exists, so make a new one
                 else:
                     if pickup_zone not in zone_times: zone_times[pickup_zone] = {}
                     if dropoff_zone not in zone_times[pickup_zone]: zone_times[pickup_zone][dropoff_zone] = {}
                     if trip_month not in zone_times[pickup_zone][dropoff_zone]: zone_times[pickup_zone][dropoff_zone][trip_month] = {}
-                    zone_times[pickup_zone][dropoff_zone][trip_month]['average'] = trip_time
-                    zone_times[pickup_zone][dropoff_zone][trip_month]['count'] = 1
+                    zone_times[pickup_zone][dropoff_zone][trip_month]['average_time'] = trip_time
+                    zone_times[pickup_zone][dropoff_zone][trip_month]['trip_count'] = 1
+                    zone_times[pickup_zone][dropoff_zone][trip_month]['base_fare'] = trip_base_fare
+                    zone_times[pickup_zone][dropoff_zone][trip_month]['tip_amount'] = trip_tip_amount
 
     loading_bar_finish()
 
+    ## Update averages from total sums
     for zone1 in zone_times:
         for zone2 in zone_times[zone1]:
             for month in zone_times[zone1][zone2]:
-                zone_times[zone1][zone2][month]['average'] /= zone_times[zone1][zone2][month]['count']
+                zone_times[zone1][zone2][month]['average_time'] /= zone_times[zone1][zone2][month]['trip_count']
+                zone_times[zone1][zone2][month]['base_fare'] /= zone_times[zone1][zone2][month]['trip_count']
+                zone_times[zone1][zone2][month]['tip_amount'] /= zone_times[zone1][zone2][month]['trip_count']
 
     # Write to JSON
     with open(output_path, 'w') as f:
@@ -222,6 +241,7 @@ if __name__ == '__main__':
         path = os.path.abspath(path)
         return path
 
+    # Parse arguments
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('data_folder', type=directory)
@@ -229,4 +249,5 @@ if __name__ == '__main__':
     parser.add_argument('output_path', type=writable_file)
     args = parser.parse_args()
 
+    # Process data
     process_data(args.data_folder, args.zones_path, args.output_path)
