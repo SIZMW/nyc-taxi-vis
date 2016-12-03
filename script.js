@@ -14,6 +14,9 @@ $(function () {
   var canvasWidth = $('#canvas').width();
   var canvasHeight = $('#canvas').height();
 
+  // TODO Temporary month selection
+  var MONTH = 6;
+
   d3.json('taxi_zones.json', function (taxiZones) {
     d3.json('data.json', function (taxiTimes) {
       taxiZones.features.forEach(function (feature) {
@@ -57,8 +60,8 @@ $(function () {
       // Get smallest and largest travel time
       Object.values(taxiTimes).forEach(function (zone1) {
         Object.values(zone1).forEach(function (time) {
-          maxTaxiTime = Math.max(maxTaxiTime, time.average);
-          minTaxiTime = Math.min(minTaxiTime, time.average);
+          maxTaxiTime = Math.max(maxTaxiTime, time[MONTH].average_time);
+          minTaxiTime = Math.min(minTaxiTime, time[MONTH].average_time);
         });
       });
 
@@ -69,8 +72,8 @@ $(function () {
        * @param zone2 The second zone.
        */
       function getTaxiTime(zone1, zone2) {
-        if (taxiTimes[zone1] && taxiTimes[zone1][zone2]) return taxiTimes[zone1][zone2];
-        if (taxiTimes[zone2] && taxiTimes[zone2][zone1]) return taxiTimes[zone2][zone1];
+        if (taxiTimes[zone1] && taxiTimes[zone1][zone2]) return taxiTimes[zone1][zone2][MONTH];
+        if (taxiTimes[zone2] && taxiTimes[zone2][zone1]) return taxiTimes[zone2][zone1][MONTH];
         return undefined;
       }
 
@@ -114,7 +117,7 @@ $(function () {
         if (taxiTimes[zoneID]) {
           var maxTaxiTime = -Infinity;
           Object.values(taxiTimes[zoneID]).forEach(function (time) {
-            maxTaxiTime = Math.max(maxTaxiTime, time.average);
+            maxTaxiTime = Math.max(maxTaxiTime, time[MONTH].average_time);
           });
         }
 
@@ -136,7 +139,7 @@ $(function () {
             if (zoneID === d.properties['LocationID']) return 1.0;
             var time = getTaxiTime(zoneID, d.properties['LocationID']);
             if (time === undefined) return 0.2;
-            return time.average / maxTaxiTime;
+            return time.average_time / maxTaxiTime;
           });
       }
 
