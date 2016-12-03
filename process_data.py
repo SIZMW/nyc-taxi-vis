@@ -143,6 +143,7 @@ def process_data(data_folder, zones_path, output_path):
                 dropoff_date = parse_date(row[2])
                 pickup_loc = Point(float(row[5]), float(row[6]))
                 dropoff_loc = Point(float(row[9]), float(row[10]))
+                trip_month = pickup_date.month
 
                 # Bad data
                 if pickup_loc == Point(0, 0): continue
@@ -160,22 +161,26 @@ def process_data(data_folder, zones_path, output_path):
 
                 # Calculate averages
                 if pickup_zone in zone_times and dropoff_zone in zone_times[pickup_zone]:
-                    zone_times[pickup_zone][dropoff_zone]['average'] += trip_time
-                    zone_times[pickup_zone][dropoff_zone]['count'] += 1
+                    if trip_month not in zone_times[pickup_zone][dropoff_zone]: zone_times[pickup_zone][dropoff_zone][trip_month] = {}
+                    zone_times[pickup_zone][dropoff_zone][trip_month]['average'] += trip_time
+                    zone_times[pickup_zone][dropoff_zone][trip_month]['count'] += 1
                 elif dropoff_zone in zone_times and pickup_zone in zone_times[dropoff_zone]:
-                    zone_times[dropoff_zone][pickup_zone]['average'] += trip_time
-                    zone_times[dropoff_zone][pickup_zone]['count'] += 1
+                    if trip_month not in zone_times[dropoff_zone][pickup_zone]: zone_times[dropoff_zone][pickup_zone][trip_month] = {}
+                    zone_times[dropoff_zone][pickup_zone][trip_month]['average'] += trip_time
+                    zone_times[dropoff_zone][pickup_zone][trip_month]['count'] += 1
                 else:
                     if pickup_zone not in zone_times: zone_times[pickup_zone] = {}
                     if dropoff_zone not in zone_times[pickup_zone]: zone_times[pickup_zone][dropoff_zone] = {}
-                    zone_times[pickup_zone][dropoff_zone]['average'] = trip_time
-                    zone_times[pickup_zone][dropoff_zone]['count'] = 1
+                    if trip_month not in zone_times[pickup_zone][dropoff_zone]: zone_times[pickup_zone][dropoff_zone][trip_month] = {}
+                    zone_times[pickup_zone][dropoff_zone][trip_month]['average'] = trip_time
+                    zone_times[pickup_zone][dropoff_zone][trip_month]['count'] = 1
 
     loading_bar_finish()
 
     for zone1 in zone_times:
         for zone2 in zone_times[zone1]:
-            zone_times[zone1][zone2]['average'] /= zone_times[zone1][zone2]['count']
+            for month in zone_times[zone1][zone2]:
+                zone_times[zone1][zone2][month]['average'] /= zone_times[zone1][zone2][month]['count']
 
     # Write to JSON
     with open(output_path, 'w') as f:
