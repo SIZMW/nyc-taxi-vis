@@ -85,7 +85,7 @@ def file_lines(fname):
             pass
     return i + 1
 
-def process_data(data_folder, zones_path, output_path):
+def process_data(data_folder, zones_path, output_path, record_limit):
     """
     Process the data to convert longitude and latitude to zone IDs.
     Arguments:
@@ -94,7 +94,6 @@ def process_data(data_folder, zones_path, output_path):
         output_path: The file path to the output file.
     Returns: N/A
     """
-    record_limit = 20
 
     zones = process_zones(zones_path)
 
@@ -270,7 +269,7 @@ if __name__ == '__main__':
     parser.add_argument('data_folder', type=directory)
     parser.add_argument('zones_path', type=file)
     parser.add_argument('output_path', type=writable_file)
-    args = parser.parse_args()
+    parser.add_argument('--record_limit', type=int, default=None)
 
     # Process data
-    process_data(args.data_folder, args.zones_path, args.output_path)
+    process_data(**parser.parse_args().__dict__)
