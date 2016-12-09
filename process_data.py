@@ -9,16 +9,12 @@ from loading_bar import *
 Point = namedtuple('Point', ('x', 'y'))
 TaxiZone = namedtuple('TaxiZone', ('locID', 'polygons'))
 class ZoneDatum(object):
-    __slots__ = ('count', 'time', 'fare_base', 'fare_extra', 'fare_mta_tax', 'fare_tip', 'fare_tolls')
+    __slots__ = ('count', 'time', 'fare')
 
     def __init__(self):
         self.count = 0
         self.time = 0.0
-        self.fare_base = 0.0
-        self.fare_extra = 0.0
-        self.fare_mta_tax = 0.0
-        self.fare_tip = 0.0
-        self.fare_tolls = 0.0
+        self.fare = 0.0
 
     def write_json(self, f):
         f.write('[')
@@ -26,15 +22,7 @@ class ZoneDatum(object):
         f.write(',')
         f.write(str(self.time))
         f.write(',')
-        f.write(str(self.fare_base))
-        f.write(',')
-        f.write(str(self.fare_extra))
-        f.write(',')
-        f.write(str(self.fare_mta_tax))
-        f.write(',')
-        f.write(str(self.fare_tip))
-        f.write(',')
-        f.write(str(self.fare_tolls))
+        f.write(str(self.fare))
         f.write(']')
 
 def is_point_in_zone(point, zone):
@@ -177,11 +165,7 @@ def process_data(data_folder, zones_path, output_path):
                 dropoff_date = parse_date(row[2])
                 pickup_loc = Point(float(row[5]), float(row[6]))
                 dropoff_loc = Point(float(row[9]), float(row[10]))
-                trip_fare_base = float(row[12])
-                trip_fare_extra = float(row[13])
-                trip_fare_mta_tax = float(row[14])
-                trip_fare_tip = float(row[15])
-                trip_fare_tolls = float(row[16])
+                trip_fare = float(row[18])
                 trip_month = pickup_date.month
 
                 # Bad data
@@ -208,11 +192,7 @@ def process_data(data_folder, zones_path, output_path):
                 datum = zone_data[trip_month][zone1][zone2 - (zone1 + 1)]
                 datum.count += 1
                 datum.time += trip_time
-                datum.fare_base += trip_fare_base
-                datum.fare_extra += trip_fare_extra
-                datum.fare_mta_tax += trip_fare_mta_tax
-                datum.fare_tip += trip_fare_tip
-                datum.fare_tolls += trip_fare_tolls
+                datum.fare += trip_fare
 
     loading_bar_finish()
 
@@ -239,11 +219,7 @@ def process_data(data_folder, zones_path, output_path):
                     datum = zone2
                     if datum.count != 0:
                         datum.time /= datum.count
-                        datum.fare_base /= datum.count
-                        datum.fare_extra /= datum.count
-                        datum.fare_mta_tax /= datum.count
-                        datum.fare_tip /= datum.count
-                        datum.fare_tolls /= datum.count
+                        datum.fare /= datum.count
 
                     datum.write_json(f)
                 loading_bar_update()

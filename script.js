@@ -79,7 +79,7 @@ $(function () {
         feature.properties.center[1] /= coords.length;
       });
 
-      var TAXI_ATTR_NAMES = ['count', 'time', 'fare_base', 'fare_extra', 'fare_mta_tax', 'fare_tip', 'fare_tolls'];
+      var TAXI_ATTR_NAMES = ['count', 'time', 'fare'];
       function getTaxiAttr(datum, attr) {
         return datum[TAXI_ATTR_NAMES.indexOf(attr)];
       }
