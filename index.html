@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>
-      NYC Taxi Zone Travel Time Visualization
+      NYC Taxi Visualization
     </title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto"/>
     <link rel="stylesheet" href="styles.css"/>
@@ -11,8 +11,13 @@
     <script src="script.js"></script>
   </head>
   <body>
-    <center>
+    <div id="content">
+      <h1>NYC Taxi Visualization</h1>
+      <div id="month-input-container">
+        <input id="month-input" type="range" min="0" max="11" value="0" step="1">
+        <span id="month-name-label"></span>
+      </div>
       <svg id="canvas"></svg>
-    </center>
+    </div>
   </body>
 </html>

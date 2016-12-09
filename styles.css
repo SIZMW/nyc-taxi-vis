@@ -1,8 +1,18 @@
-html, body { margin:0; padding:0; }
-svg { position:fixed; top:0; left:0; height:100%; width:100%; }
-
 body {
   font-family: Roboto;
+}
+
+#content {
+  width: 800pt;
+  margin: 0 auto;
+}
+
+#month-input-container {
+}
+
+#canvas {
+  width: 800pt;
+  height: 500pt;
 }
 
 #canvas .taxi-zone path {

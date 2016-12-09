@@ -8,6 +8,34 @@ from loading_bar import *
 
 Point = namedtuple('Point', ('x', 'y'))
 TaxiZone = namedtuple('TaxiZone', ('locID', 'polygons'))
+class ZoneDatum(object):
+    __slots__ = ('count', 'time', 'fare_base', 'fare_extra', 'fare_mta_tax', 'fare_tip', 'fare_tolls')
+
+    def __init__(self):
+        self.count = 0
+        self.time = 0.0
+        self.fare_base = 0.0
+        self.fare_extra = 0.0
+        self.fare_mta_tax = 0.0
+        self.fare_tip = 0.0
+        self.fare_tolls = 0.0
+
+    def write_json(self, f):
+        f.write('[')
+        f.write(str(self.count))
+        f.write(',')
+        f.write(str(self.time))
+        f.write(',')
+        f.write(str(self.fare_base))
+        f.write(',')
+        f.write(str(self.fare_extra))
+        f.write(',')
+        f.write(str(self.fare_mta_tax))
+        f.write(',')
+        f.write(str(self.fare_tip))
+        f.write(',')
+        f.write(str(self.fare_tolls))
+        f.write(']')
 
 def is_point_in_zone(point, zone):
     """
@@ -78,6 +106,8 @@ def process_data(data_folder, zones_path, output_path):
         output_path: The file path to the output file.
     Returns: N/A
     """
+    record_limit = 20
+
     zones = process_zones(zones_path)
 
     def get_zone_id(point):
@@ -94,15 +124,18 @@ def process_data(data_folder, zones_path, output_path):
 
     data_files = [os.path.join(data_folder, data_file) for data_file in os.listdir(data_folder)]
 
-    print('Counting records in {:,d} files...'.format(len(data_files)))
+    if record_limit is None:
+        print('Counting records in {:,d} files...'.format(len(data_files)))
 
-    # Estimate how many records to read
-    record_count = 0
-    loading_bar_init(len(data_files))
-    for data_file in data_files:
-        record_count += file_lines(data_file)
-        loading_bar_update()
-    loading_bar_finish()
+        # Estimate how many records to read
+        record_count = 0
+        loading_bar_init(len(data_files))
+        for data_file in data_files:
+            record_count += file_lines(data_file)
+            loading_bar_update()
+        loading_bar_finish()
+    else:
+        record_count = record_limit
 
     date_formats = ('%m/%d/%Y %H:%M', '%Y-%m-%d %H:%M:%S')
 
@@ -120,20 +153,19 @@ def process_data(data_folder, zones_path, output_path):
                 pass
         raise ValueError('{} does not match any formats'.format(s))
 
-    zone_times = {}
+    zone_data = [[[ZoneDatum() for zone2 in range(zone1 + 1, len(zones))] for zone1 in range(len(zones) - 1)] for _ in range(12)]
 
-    record_limit = 20000
     records_processed = 0
 
     print('Processing {:,d} records...'.format(record_count))
-    loading_bar_init(record_limit)
+    loading_bar_init(record_count)
     for data_file in data_files:
         with open(data_file, 'r') as f:
             r = csv.reader(f)
             next(r) # Skip header
             for row in r:
                 # Stop at record limit
-                if records_processed >= record_limit: break
+                if record_limit is not None and records_processed >= record_limit: break
                 records_processed += 1
                 loading_bar_update()
 
@@ -145,8 +177,11 @@ def process_data(data_folder, zones_path, output_path):
                 dropoff_date = parse_date(row[2])
                 pickup_loc = Point(float(row[5]), float(row[6]))
                 dropoff_loc = Point(float(row[9]), float(row[10]))
-                trip_base_fare = float(row[12])
-                trip_tip_amount = float(row[15])
+                trip_fare_base = float(row[12])
+                trip_fare_extra = float(row[13])
+                trip_fare_mta_tax = float(row[14])
+                trip_fare_tip = float(row[15])
+                trip_fare_tolls = float(row[16])
                 trip_month = pickup_date.month
 
                 # Bad data
@@ -167,43 +202,55 @@ def process_data(data_folder, zones_path, output_path):
                 if pickup_zone is None or dropoff_zone is None: continue
                 if pickup_zone == dropoff_zone: continue
 
-                # Calculate averages
-                if pickup_zone in zone_times and dropoff_zone in zone_times[pickup_zone]:
-                    if trip_month not in zone_times[pickup_zone][dropoff_zone]: zone_times[pickup_zone][dropoff_zone][trip_month] = {}
-                    zone_times[pickup_zone][dropoff_zone][trip_month]['average_time'] += trip_time
-                    zone_times[pickup_zone][dropoff_zone][trip_month]['trip_count'] += 1
-                    zone_times[pickup_zone][dropoff_zone][trip_month]['base_fare'] += trip_base_fare
-                    zone_times[pickup_zone][dropoff_zone][trip_month]['tip_amount'] += trip_tip_amount
-                # Check for reversed dropoff and pickup areas
-                elif dropoff_zone in zone_times and pickup_zone in zone_times[dropoff_zone]:
-                    if trip_month not in zone_times[dropoff_zone][pickup_zone]: zone_times[dropoff_zone][pickup_zone][trip_month] = {}
-                    zone_times[dropoff_zone][pickup_zone][trip_month]['average_time'] += trip_time
-                    zone_times[dropoff_zone][pickup_zone][trip_month]['trip_count'] += 1
-                    zone_times[dropoff_zone][pickup_zone][trip_month]['base_fare'] += trip_base_fare
-                    zone_times[dropoff_zone][pickup_zone][trip_month]['tip_amount'] += trip_tip_amount
-                # Neither pair exists, so make a new one
-                else:
-                    if pickup_zone not in zone_times: zone_times[pickup_zone] = {}
-                    if dropoff_zone not in zone_times[pickup_zone]: zone_times[pickup_zone][dropoff_zone] = {}
-                    if trip_month not in zone_times[pickup_zone][dropoff_zone]: zone_times[pickup_zone][dropoff_zone][trip_month] = {}
-                    zone_times[pickup_zone][dropoff_zone][trip_month]['average_time'] = trip_time
-                    zone_times[pickup_zone][dropoff_zone][trip_month]['trip_count'] = 1
-                    zone_times[pickup_zone][dropoff_zone][trip_month]['base_fare'] = trip_base_fare
-                    zone_times[pickup_zone][dropoff_zone][trip_month]['tip_amount'] = trip_tip_amount
+
+                zone1 = min(pickup_zone, dropoff_zone) - 1
+                zone2 = max(pickup_zone, dropoff_zone) - 1
+                datum = zone_data[trip_month][zone1][zone2 - (zone1 + 1)]
+                datum.count += 1
+                datum.time += trip_time
+                datum.fare_base += trip_fare_base
+                datum.fare_extra += trip_fare_extra
+                datum.fare_mta_tax += trip_fare_mta_tax
+                datum.fare_tip += trip_fare_tip
+                datum.fare_tolls += trip_fare_tolls
 
     loading_bar_finish()
 
-    ## Update averages from total sums
-    for zone1 in zone_times:
-        for zone2 in zone_times[zone1]:
-            for month in zone_times[zone1][zone2]:
-                zone_times[zone1][zone2][month]['average_time'] /= zone_times[zone1][zone2][month]['trip_count']
-                zone_times[zone1][zone2][month]['base_fare'] /= zone_times[zone1][zone2][month]['trip_count']
-                zone_times[zone1][zone2][month]['tip_amount'] /= zone_times[zone1][zone2][month]['trip_count']
-
-    # Write to JSON
+    print('Writing JSON...')
+    loading_bar_init(12 * (len(zones) - 1))
     with open(output_path, 'w') as f:
-        json.dump(zone_times, f)
+        ## Update averages from total sums
+        f.write('[')
+        first_month = True
+        for month in zone_data:
+            if first_month: first_month = False
+            else: f.write(',')
+            f.write('[')
+            first_zone1 = True
+            for zone1 in month:
+                if first_zone1: first_zone1 = False
+                else: f.write(',')
+                f.write('[')
+                first_zone2 = True
+                for zone2 in zone1:
+                    if first_zone2: first_zone2 = False
+                    else: f.write(',')
+
+                    datum = zone2
+                    if datum.count != 0:
+                        datum.time /= datum.count
+                        datum.fare_base /= datum.count
+                        datum.fare_extra /= datum.count
+                        datum.fare_mta_tax /= datum.count
+                        datum.fare_tip /= datum.count
+                        datum.fare_tolls /= datum.count
+
+                    datum.write_json(f)
+                loading_bar_update()
+                f.write(']')
+            f.write(']')
+        f.write(']')
+    loading_bar_finish()
 
 
 if __name__ == '__main__':

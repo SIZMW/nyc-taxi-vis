@@ -1,4 +1,31 @@
 $(function () {
+
+  var MONTH_NAMES = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+  ];
+
+  $('input[type=range]').on('input', function () {
+      $(this).trigger('change');
+  });
+
+  var $monthInput = $('#month-input');
+  var $monthNameLabel = $('#month-name-label');
+  $monthInput.change(function () {
+    $monthNameLabel.text(MONTH_NAMES[+$monthInput.val()]);
+  });
+  $monthNameLabel.text(MONTH_NAMES[+$monthInput.val()]);
+
   // Margin amounts
   var margin = {
     top: 20,
@@ -16,11 +43,8 @@ $(function () {
   var canvasHeight = $('#canvas')
     .height();
 
-  // TODO Temporary month selection
-  var MONTH = 6;
-
   d3.json('taxi_zones.json', function (taxiZones) {
-    d3.json('data.json', function (taxiTimes) {
+    d3.json('data.json', function (taxiData) {
       taxiZones.features.forEach(function (feature) {
         var coords = [];
 
@@ -55,30 +79,43 @@ $(function () {
         feature.properties.center[1] /= coords.length;
       });
 
+      var TAXI_ATTR_NAMES = ['count', 'time', 'fare_base', 'fare_extra', 'fare_mta_tax', 'fare_tip', 'fare_tolls'];
+      function getTaxiAttr(datum, attr) {
+        return datum[TAXI_ATTR_NAMES.indexOf(attr)];
+      }
+
+      function getTaxiDatum(month, zone1, zone2) {
+        zone1 -= 1;
+        zone2 -= 1;
+        if (zone1 > zone2) {
+          zone1 ^= zone2;
+          zone2 ^= zone1;
+          zone1 ^= zone2;
+        }
+        return taxiData[month][zone1][zone2 - (zone1 + 1)];
+      }
+
+      var minTaxiTime = +Infinity;
       var maxTaxiTime = -Infinity;
-      var minTaxiTime = Infinity;
 
       // Get smallest and largest travel time
-      Object.values(taxiTimes)
-        .forEach(function (zone1) {
-          Object.values(zone1)
-            .forEach(function (time) {
-              maxTaxiTime = Math.max(maxTaxiTime, time[MONTH].average_time);
-              minTaxiTime = Math.min(minTaxiTime, time[MONTH].average_time);
-            });
+      taxiData.forEach(function (month) {
+        month.forEach(function (zone1) {
+          zone1.forEach(function (zone2) {
+            var datum = zone2;
+            minTaxiTime = Math.min(minTaxiTime, getTaxiAttr(datum, 'time'));
+            maxTaxiTime = Math.max(maxTaxiTime, getTaxiAttr(datum, 'time'));
+          });
         });
+      });
 
-      /**
-       * Returns the time from one zone to another.
-       *
-       * @param zone1 The first zone.
-       * @param zone2 The second zone.
-       */
-      function getTaxiTime(zone1, zone2) {
-        if (taxiTimes[zone1] && taxiTimes[zone1][zone2]) return taxiTimes[zone1][zone2][MONTH];
-        if (taxiTimes[zone2] && taxiTimes[zone2][zone1]) return taxiTimes[zone2][zone1][MONTH];
-        return undefined;
-      }
+      var selectedMonth = 0;
+      var selectedZone = null;
+
+      $monthInput.change(function () {
+        selectedMonth = +$monthInput.val();
+        updateCanvas();
+      });
 
       var geoPath = d3.geoPath(d3.geoMercator()
         .fitExtent([
@@ -97,8 +134,8 @@ $(function () {
         .append('path')
         .attr('d', geoPath)
         .on('mouseup', function (d) {
-          selectedZoneID = d.properties['LocationID'];
-          selectZone(d.properties['LocationID']);
+          selectedZone = d.properties['LocationID'];
+          updateCanvas();
           d3.event.stopPropagation();
         })
         .on('mouseover', function (d) {
@@ -112,7 +149,8 @@ $(function () {
         });
 
       canvas.on('mouseup', function () {
-        selectZone(null);
+        selectedZone = null;
+        updateCanvas();
       });
 
       /**
@@ -120,33 +158,29 @@ $(function () {
        *
        * @param zoneID The zone being selected.
        */
-      function selectZone(zoneID) {
-        if (taxiTimes[zoneID]) {
-          var maxTaxiTime = -Infinity;
-          Object.values(taxiTimes[zoneID])
-            .forEach(function (time) {
-              maxTaxiTime = Math.max(maxTaxiTime, time[MONTH].average_time);
-            });
-        }
-
+      function updateCanvas() {
         // Color zones based on data values
         var zones = canvas.selectAll('.taxi-zones .taxi-zone')
           .classed('selected', function (d) {
-            return zoneID === d.properties['LocationID'];
+            return selectedZone === d.properties['LocationID'];
           })
           .classed('has-data', function (d) {
-            return zoneID !== null && zoneID !== d.properties['LocationID'] && getTaxiTime(zoneID, d.properties['LocationID']);
+            var locID = d.properties['LocationID'];
+            return selectedZone !== null && selectedZone !== locID && getTaxiAttr(getTaxiDatum(selectedMonth, selectedZone, locID), 'count');
           })
           .classed('no-data', function (d) {
-            return zoneID !== null && zoneID !== d.properties['LocationID'] && !getTaxiTime(zoneID, d.properties['LocationID']);
+            var locID = d.properties['LocationID'];
+            return selectedZone !== null && selectedZone !== locID && !getTaxiAttr(getTaxiDatum(selectedMonth, selectedZone, locID), 'count');
           });
 
         zones.select('path')
           .attr('fill-opacity', function (d) {
-            if (zoneID === null) return 0.2;
-            if (zoneID === d.properties['LocationID']) return 1.0;
-            var time = getTaxiTime(zoneID, d.properties['LocationID']);
-            if (time === undefined) return 0.2;
+            var locID = d.properties['LocationID'];
+            if (selectedZone === null) return 0.2;
+            if (selectedZone === locID) return 1.0;
+            var taxiDatum = getTaxiDatum(selectedMonth, selectedZone, locID);
+            if (!getTaxiAttr(taxiDatum, 'count')) return 0.2;
+            var time = getTaxiAttr(taxiDatum, 'time');
             return time.average_time / maxTaxiTime;
           });
       }
@@ -184,7 +218,7 @@ $(function () {
           .style('opacity', 0)
       }
 
-      selectZone(null);
+      updateCanvas(0, null);
     });
   });
 
