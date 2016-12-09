@@ -99,11 +99,14 @@ $(function () {
       var maxTaxiTime = -Infinity;
 
       // Get smallest and largest travel time
-      taxiData.forEach(function (month) {
-        month.forEach(function (zone1) {
-          zone1.forEach(function (zone2) {
+      taxiData.forEach(function (month, monthIdx) {
+        month.forEach(function (zone1, zone1Idx) {
+          zone1.forEach(function (zone2, zone2Idx) {
             var datum = zone2;
             minTaxiTime = Math.min(minTaxiTime, getTaxiAttr(datum, 'time'));
+            if (getTaxiAttr(datum, 'time') == 1396.1333333333334) {
+              console.log(monthIdx, zone1Idx, zone2Idx);
+            }
             maxTaxiTime = Math.max(maxTaxiTime, getTaxiAttr(datum, 'time'));
           });
         });
@@ -181,7 +184,7 @@ $(function () {
             var taxiDatum = getTaxiDatum(selectedMonth, selectedZone, locID);
             if (!getTaxiAttr(taxiDatum, 'count')) return 0.2;
             var time = getTaxiAttr(taxiDatum, 'time');
-            return time.average_time / maxTaxiTime;
+            return time / maxTaxiTime;
           });
       }
 

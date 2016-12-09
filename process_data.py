@@ -1,20 +1,24 @@
 import os
 import json
 import csv
+from itertools import *
 from datetime import datetime, timedelta
-from collections import namedtuple
+from collections import namedtuple, deque
 from loading_bar import *
+from threading import RLock
+from concurrent.futures import ThreadPoolExecutor
 
 
 Point = namedtuple('Point', ('x', 'y'))
 TaxiZone = namedtuple('TaxiZone', ('locID', 'polygons'))
 class ZoneDatum(object):
-    __slots__ = ('count', 'time', 'fare')
+    __slots__ = ('count', 'time', 'fare', 'lock')
 
     def __init__(self):
         self.count = 0
         self.time = 0.0
         self.fare = 0.0
+        self.lock = RLock()
 
     def write_json(self, f):
         f.write('[')
@@ -24,6 +28,15 @@ class ZoneDatum(object):
         f.write(',')
         f.write(str(self.fare))
         f.write(']')
+
+    def __getstate__(self):
+        return (self.count, self.time, self.fare, self.lock)
+
+    def __setstate(self, state):
+        self.count = state.count
+        self.time = state.time
+        self.fare = state.fare
+        self.lock = state.lock
 
 def is_point_in_zone(point, zone):
     """
@@ -85,7 +98,10 @@ def file_lines(fname):
             pass
     return i + 1
 
-def process_data(data_folder, zones_path, output_path, record_limit):
+# http://code.activestate.com/lists/python-ideas/23364/
+exhaust_iter = deque(maxlen=0).extend
+
+def process_data(data_folder, zones_path, output_path):
     """
     Process the data to convert longitude and latitude to zone IDs.
     Arguments:
@@ -94,6 +110,8 @@ def process_data(data_folder, zones_path, output_path, record_limit):
         output_path: The file path to the output file.
     Returns: N/A
     """
+
+    record_skip = 1200
 
     zones = process_zones(zones_path)
 
@@ -111,18 +129,15 @@ def process_data(data_folder, zones_path, output_path, record_limit):
 
     data_files = [os.path.join(data_folder, data_file) for data_file in os.listdir(data_folder)]
 
-    if record_limit is None:
-        print('Counting records in {:,d} files...'.format(len(data_files)))
+    print('Counting records in {:,d} files...'.format(len(data_files)))
 
-        # Estimate how many records to read
-        record_count = 0
-        loading_bar_init(len(data_files))
-        for data_file in data_files:
-            record_count += file_lines(data_file)
-            loading_bar_update()
-        loading_bar_finish()
-    else:
-        record_count = record_limit
+    # Estimate how many records to read
+    record_count = 0
+    loading_bar_init(len(data_files))
+    for data_file in data_files:
+        record_count += file_lines(data_file) // record_skip
+        loading_bar_update()
+    loading_bar_finish()
 
     date_formats = ('%m/%d/%Y %H:%M', '%Y-%m-%d %H:%M:%S')
 
@@ -140,24 +155,24 @@ def process_data(data_folder, zones_path, output_path, record_limit):
                 pass
         raise ValueError('{} does not match any formats'.format(s))
 
+    print('Initializing {:,d} data points...'.format(12 * (len(zones) - 1) * len(zones)))
     zone_data = [[[ZoneDatum() for zone2 in range(zone1 + 1, len(zones))] for zone1 in range(len(zones) - 1)] for _ in range(12)]
 
-    records_processed = 0
+    print('Creating processing pool...')
+    processing_pool = ThreadPoolExecutor(max_workers=4)
 
-    print('Processing {:,d} records...'.format(record_count))
+    print('Processing records...')
     loading_bar_init(record_count)
     for data_file in data_files:
         with open(data_file, 'r') as f:
             r = csv.reader(f)
             next(r) # Skip header
-            for row in r:
-                # Stop at record limit
-                if record_limit is not None and records_processed >= record_limit: break
-                records_processed += 1
+
+            def process_row(row):
                 loading_bar_update()
 
                 # Row is not valid
-                if not row: continue
+                if not row: return
 
                 # Parse row
                 pickup_date = parse_date(row[1])
@@ -168,30 +183,38 @@ def process_data(data_folder, zones_path, output_path, record_limit):
                 trip_month = pickup_date.month
 
                 # Bad data
-                if pickup_loc == Point(0, 0): continue
-                if dropoff_loc == Point(0, 0): continue
+                if pickup_loc == Point(0, 0): return
+                if dropoff_loc == Point(0, 0): return
 
                 # Parse trip time
                 trip_time = (dropoff_date - pickup_date) / timedelta(minutes=1)
 
                 # Skip unreasonably short trips
-                if trip_time < 1: continue
+                if trip_time < 1: return
+                # Fix long trip times that might just be errors
+                if 12 * 60 <= trip_time < 24 * 60:
+                    trip_time = 24 * 60 - trip_time
+                # Skip unreasonably long trips
+                if trip_time >= 24 * 60: return
 
                 # Convert location coordinates to zone ID
                 pickup_zone = get_zone_id(pickup_loc)
                 dropoff_zone = get_zone_id(dropoff_loc)
 
                 # Bad data
-                if pickup_zone is None or dropoff_zone is None: continue
-                if pickup_zone == dropoff_zone: continue
+                if pickup_zone is None or dropoff_zone is None: return
+                if pickup_zone == dropoff_zone: return
 
 
                 zone1 = min(pickup_zone, dropoff_zone) - 1
                 zone2 = max(pickup_zone, dropoff_zone) - 1
-                datum = zone_data[trip_month][zone1][zone2 - (zone1 + 1)]
-                datum.count += 1
-                datum.time += trip_time
-                datum.fare += trip_fare
+                datum = zone_data[trip_month - 1][zone1][zone2 - (zone1 + 1)]
+                with datum.lock:
+                    datum.count += 1
+                    datum.time += trip_time
+                    datum.fare += trip_fare
+
+            exhaust_iter(processing_pool.map(process_row, islice(r, 0, None, record_skip)))
 
     loading_bar_finish()
 
@@ -269,7 +292,6 @@ if __name__ == '__main__':
     parser.add_argument('data_folder', type=directory)
     parser.add_argument('zones_path', type=file)
     parser.add_argument('output_path', type=writable_file)
-    parser.add_argument('--record_limit', type=int, default=None)
 
     # Process data
     process_data(**parser.parse_args().__dict__)
