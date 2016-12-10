@@ -1,5 +1,6 @@
 $(function () {
 
+  // Month to index map
   var MONTH_NAMES = [
     'January',
     'February',
@@ -15,10 +16,14 @@ $(function () {
     'December'
   ];
 
-  $('input[type=range]').on('input', function () {
-      $(this).trigger('change');
-  });
+  // Trigger map changes on slider movement
+  $('input[type=range]')
+    .on('input', function () {
+      $(this)
+        .trigger('change');
+    });
 
+  // Update month name display
   var $monthInput = $('#month-input');
   var $monthNameLabel = $('#month-name-label');
   $monthInput.change(function () {
@@ -33,11 +38,11 @@ $(function () {
     bottom: 30,
     left: 30
   };
+
   margin.width = margin.left + margin.right;
   margin.height = margin.top + margin.bottom;
 
   var canvas = d3.select('#canvas');
-
   var canvasWidth = $('#canvas')
     .width();
   var canvasHeight = $('#canvas')
@@ -66,7 +71,6 @@ $(function () {
         }
 
         findCoords(feature.geometry.coordinates);
-
         feature.properties.center = [0, 0];
 
         // Get averaged center of polygon
@@ -79,14 +83,33 @@ $(function () {
         feature.properties.center[1] /= coords.length;
       });
 
+      // Taxi data attributes in index order
       var TAXI_ATTR_NAMES = ['count', 'time', 'fare'];
+
+      /**
+       * Returns the attribute from the data value.
+       *
+       * @param datum The data value to extract from.
+       * @param attr The attribute name to extract.
+       * @return the attribute value
+       */
       function getTaxiAttr(datum, attr) {
         return datum[TAXI_ATTR_NAMES.indexOf(attr)];
       }
 
+      /**
+       * Returns the taxi data object for the month, first zone and second zone.
+       *
+       * @param month The month selected.
+       * @param zone1 The first zone.
+       * @param zone2 The second zone.
+       * @return the datum object
+       */
       function getTaxiDatum(month, zone1, zone2) {
         zone1 -= 1;
         zone2 -= 1;
+
+        // Switch zones so we map lesser ID first
         if (zone1 > zone2) {
           zone1 ^= zone2;
           zone2 ^= zone1;
@@ -104,7 +127,7 @@ $(function () {
           zone1.forEach(function (zone2, zone2Idx) {
             var datum = zone2;
             minTaxiTime = Math.min(minTaxiTime, getTaxiAttr(datum, 'time'));
-            
+
             // TODO Remove this
             if (getTaxiAttr(datum, 'time') > 240) {
               console.log(monthIdx + 1, zone1Idx + 1, zone2Idx + (zone1Idx + 1) + 1, datum);
@@ -119,6 +142,7 @@ $(function () {
       var selectedMonth = 0;
       var selectedZone = null;
 
+      // Update map when month changes
       $monthInput.change(function () {
         selectedMonth = +$monthInput.val();
         updateCanvas();
@@ -192,44 +216,49 @@ $(function () {
           });
       }
 
+      /**
+       * Adds the color scale based on color gradient of zones.
+       */
       function addGradientScale() {
         var defs = canvas.append('defs');
 
+        // Add gradient color object
         var gradient = defs.append('linearGradient')
           .attr('id', 'gradient-scale');
 
-var scaleWidth = 20;
-          var scaleHeight = 200;
-          var minToHrConvert = 60;
+        var scaleWidth = 20;
+        var scaleHeight = 200;
+        var minToHrConvert = 60;
 
-          var legendScale = d3.scalePoint()
-            .domain([minTaxiTime / minToHrConvert, maxTaxiTime / minToHrConvert])
-            .range([canvasHeight / 2 +scaleHeight / 2 - 1, canvasHeight / 2 - scaleHeight / 2])
+        // Make tick scale
+        var legendScale = d3.scalePoint()
+          .domain([minTaxiTime / minToHrConvert, maxTaxiTime / minToHrConvert])
+          .range([canvasHeight / 2 + scaleHeight / 2 - 1, canvasHeight / 2 - scaleHeight / 2])
 
-            var axis = d3.axisLeft(legendScale);
-            axis.tickFormat(function(d, i) {
-              return d + ' hrs';
-            });
+        var axis = d3.axisLeft(legendScale);
+        axis.tickFormat(function (d, i) {
+          return d + ' hrs';
+        });
 
-
-
-
+        // Set threshold range
         gradient
           .attr("x1", "0%")
           .attr("y1", "0%")
           .attr("x2", "0%")
           .attr("y2", "100%");
 
-        gradient.append("stop") 
+        // Add start and stop on gradient colors
+        gradient.append("stop")
           .attr("offset", "0%")
           .attr('stop-opacity', 0.0)
           .attr("stop-color", "darkgreen");
 
-        gradient.append("stop") 
+        gradient.append("stop")
           .attr("offset", "100%")
           .attr('stop-opacity', 1.0)
           .attr("stop-color", "darkgreen");
 
+        // Add scale rectangles
         canvas.append('rect')
           .attr('class', 'legend')
           .attr('x', Math.floor(canvasWidth - (margin.right * 2)))
@@ -240,12 +269,12 @@ var scaleWidth = 20;
           .attr('stroke-width', 0)
           .style('fill', 'url(#gradient-scale)');
 
-                      canvas
-              .append('g')
-              .classed('legend-axis', true)
-              .attr('transform', 'translate(' +  Math.floor(canvasWidth - (margin.right * 2))+ ',0)')
-              .attr('stroke-width', 1)
-              .call(axis);
+        canvas
+          .append('g')
+          .classed('legend-axis', true)
+          .attr('transform', 'translate(' + Math.floor(canvasWidth - (margin.right * 2)) + ',0)')
+          .attr('stroke-width', 1)
+          .call(axis);
       }
 
       function tooltipZoneMouseOver(d) {
