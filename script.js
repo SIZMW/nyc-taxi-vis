@@ -233,7 +233,7 @@ $(function () {
         // Make tick scale
         var legendScale = d3.scalePoint()
           .domain([minTaxiTime / minToHrConvert, maxTaxiTime / minToHrConvert])
-          .range([canvasHeight / 2 + scaleHeight / 2 - 1, canvasHeight / 2 - scaleHeight / 2])
+          .range([canvasHeight / 2 - scaleHeight / 2, canvasHeight / 2 + scaleHeight / 2 - 1])
 
         var axis = d3.axisLeft(legendScale);
         axis.tickFormat(function (d, i) {
