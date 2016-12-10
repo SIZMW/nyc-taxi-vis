@@ -34,16 +34,19 @@ $(function () {
   var TAXI_MAP_ATTRS = [
     {
       attrName: 'time',
+      minValue: 5,
       title: 'Travel Time',
       description: 'some <b>HTML</b>'
     },
     {
       attrName: 'fare',
+      minValue: 10,
       title: 'Trip Fare',
       description: 'some <b>HTML</b>'
     },
     {
       attrName: 'count',
+      minValue: 1,
       title: 'Trip Frequency',
       description: 'some <b>HTML</b>'
     }
@@ -131,7 +134,7 @@ $(function () {
       }
 
       var selectedMonth = 0;
-      var selectedZone = null;
+      var selectedZone = 132;
 
       $('#maps').empty();
       var updateCanvasFcns = TAXI_MAP_ATTRS.map(function (mapAttrData) {
@@ -146,7 +149,7 @@ $(function () {
         var $canvas = $('<svg width="800pt" height="500pt"></svg>');
         $mapBody.append($canvas);
 
-        $mapBody.append($('<div></div>').html(mapAttrData.description));
+        $mapBody.append($('<div class="map-description"></div>').html(mapAttrData.description));
 
         $('#maps').append($mapBody);
 
@@ -162,15 +165,18 @@ $(function () {
           month.forEach(function (zone1, zone1Idx) {
             zone1.forEach(function (zone2, zone2Idx) {
               var datum = zone2;
-              var attrValue = getTaxiAttr(datum, mapAttrName);
+              if (getTaxiAttr(datum, 'count')) {
+                var attrValue = getTaxiAttr(datum, mapAttrName);
+                if (attrValue > 0) {
+                  minTaxiAttr = Math.min(minTaxiAttr, attrValue);
 
-              minTaxiAttr = Math.min(minTaxiAttr, attrValue);
-
-              // TODO Remove this
-              maxTaxiAttr = Math.max(maxTaxiAttr,
-                mapAttrName === 'time' ? 240 :
-                mapAttrName === 'fare' ? 200 :
-                attrValue);
+                  // TODO Remove this
+                  maxTaxiAttr = Math.max(maxTaxiAttr,
+                    mapAttrName === 'time' ? 240 :
+                    mapAttrName === 'fare' ? 200 :
+                    attrValue);
+                }
+              }
             });
           });
         });
@@ -212,8 +218,8 @@ $(function () {
         });
 
         var attrScale = d3.scaleLog()
-          .domain([1.0, maxTaxiAttr])
-          .range([0.2, 1.0])
+          .domain([mapAttrData.minValue, maxTaxiAttr])
+          .range([0.1, 1.0]);
 
         /**
          * Selects a specific zone based on the ID and updates the maximum attribute value.
@@ -257,12 +263,12 @@ $(function () {
 
           // Make tick scale
           var legendScale = d3.scaleLog()
-            .domain([1.0, maxTaxiAttr])
+            .domain([mapAttrData.minValue, maxTaxiAttr])
             .range([canvasHeight / 2 - scaleHeight / 2, canvasHeight / 2 + scaleHeight / 2 - 1])
 
           var axis = d3.axisLeft(legendScale);
           if (mapAttrName === 'time') {
-            axis.tickValues([1, 5, 15, 30, 60, 120, 180, 240])
+            axis.tickValues([5, 15, 30, 60, 120, 180, 240])
             axis.tickFormat(function (d) {
               if (d < 60) return d + ' min' + (d == 1 ? '' : 's');
               else return (d / 60) + ' hr' + (d == 60 ? '' : 's');
@@ -270,12 +276,14 @@ $(function () {
           }
           else if (mapAttrName === 'fare') {
             var ticks = [];
-            for (var i = 0; i < Math.log10(maxTaxiAttr); i++) {
-              ticks.push(Math.pow(10, i));
-              if (2 * Math.pow(10, i) <= maxTaxiAttr) {
+            for (var i = Math.floor(Math.log10(mapAttrData.minValue)); i < Math.log10(maxTaxiAttr); i++) {
+              if (Math.pow(10, i) >= mapAttrData.minValue && Math.pow(10, i) <= maxTaxiAttr) {
+                ticks.push(Math.pow(10, i));
+              }
+              if (2 * Math.pow(10, i) >= mapAttrData.minValue && 2 * Math.pow(10, i) <= maxTaxiAttr) {
                 ticks.push(2 * Math.pow(10, i));
               }
-              if (5 * Math.pow(10, i) <= maxTaxiAttr) {
+              if (5 * Math.pow(10, i) >= mapAttrData.minValue && 5 * Math.pow(10, i) <= maxTaxiAttr) {
                 ticks.push(5 * Math.pow(10, i));
               }
             }
@@ -286,12 +294,14 @@ $(function () {
           }
           else if (mapAttrName === 'count') {
             var ticks = [];
-            for (var i = 0; i < Math.log10(maxTaxiAttr); i++) {
-              ticks.push(Math.pow(10, i));
-              if (2 * Math.pow(10, i) <= maxTaxiAttr) {
+            for (var i = Math.floor(Math.log10(mapAttrData.minValue)); i < Math.log10(maxTaxiAttr); i++) {
+              if (Math.pow(10, i) >= mapAttrData.minValue && Math.pow(10, i) <= maxTaxiAttr) {
+                ticks.push(Math.pow(10, i));
+              }
+              if (2 * Math.pow(10, i) >= mapAttrData.minValue && 2 * Math.pow(10, i) <= maxTaxiAttr) {
                 ticks.push(2 * Math.pow(10, i));
               }
-              if (5 * Math.pow(10, i) <= maxTaxiAttr) {
+              if (5 * Math.pow(10, i) >= mapAttrData.minValue && 5 * Math.pow(10, i) <= maxTaxiAttr) {
                 ticks.push(5 * Math.pow(10, i));
               }
             }
@@ -396,7 +406,7 @@ $(function () {
             .text(text);
 
           tooltip.transition()
-            .duration(200)
+            .duration(100)
             .style('opacity', 1)
         }
 
@@ -410,7 +420,7 @@ $(function () {
         function tooltipMouseOut(d) {
           tooltip
             .transition()
-            .duration(200)
+            .duration(100)
             .style('opacity', 0)
         }
 

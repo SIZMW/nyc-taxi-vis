@@ -7,6 +7,14 @@ body {
   margin: 0 auto;
 }
 
+#authors {
+  margin-bottom: 20pt;
+}
+
+#page-description {
+  margin-bottom: 3em;
+}
+
 #loading-message {
   font-size: 24pt;
   margin-top: 100pt;
@@ -19,6 +27,16 @@ body {
 
 .map-body {
   margin-top: 40pt;
+  margin-bottom: 3em;
+}
+
+.map-description {
+  
+}
+
+svg {
+  box-shadow: 0 0 0.2em black;
+  margin: 0.3em;
 }
 
 svg .taxi-zone path {
@@ -35,27 +53,27 @@ svg .taxi-zone.no-data path {
 }
 
 .map-body.time svg .taxi-zone.has-data path {
-  fill: #377eb8;
+  fill: #034C87;
 }
 
 #gradient-scale-time stop {
-  stop-color: #377eb8;
+  stop-color: #034C87;
 }
 
 .map-body.fare svg .taxi-zone.has-data path {
-  fill: #4daf4a;
+  fill: darkgreen;
 }
 
 #gradient-scale-fare stop {
-  stop-color: #4daf4a;
+  stop-color: darkgreen;
 }
 
 .map-body.count svg .taxi-zone.has-data path {
-  fill: #984ea3;
+  fill: #670675;
 }
 
 #gradient-scale-count stop {
-  stop-color: #984ea3;
+  stop-color: #670675;
 }
 
 div.tooltip {
