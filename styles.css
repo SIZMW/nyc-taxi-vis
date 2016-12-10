@@ -7,29 +7,55 @@ body {
   margin: 0 auto;
 }
 
-#month-input-container {
+#loading-message {
+  font-size: 24pt;
+  margin-top: 100pt;
+  text-align: center;
 }
 
-#canvas {
-  width: 800pt;
-  height: 500pt;
+#loading-message small {
+  font-size: 14pt;
 }
 
-#canvas .taxi-zone path {
+.map-body {
+  margin-top: 40pt;
+}
+
+svg .taxi-zone path {
   fill: black;
   stroke: black;
 }
 
-#canvas .taxi-zone.selected path {
-  fill: red;
+svg .taxi-zone.selected path {
+  fill: #e41a1c;
 }
 
-#canvas .taxi-zone.has-data path {
-  fill: darkgreen;
+svg .taxi-zone.no-data path {
+  fill: black;
 }
 
-#canvas .taxi-zone.no-data path {
-  fill: blue;
+.map-body.time svg .taxi-zone.has-data path {
+  fill: #377eb8;
+}
+
+#gradient-scale-time stop {
+  stop-color: #377eb8;
+}
+
+.map-body.fare svg .taxi-zone.has-data path {
+  fill: #4daf4a;
+}
+
+#gradient-scale-fare stop {
+  stop-color: #4daf4a;
+}
+
+.map-body.count svg .taxi-zone.has-data path {
+  fill: #984ea3;
+}
+
+#gradient-scale-count stop {
+  stop-color: #984ea3;
 }
 
 div.tooltip {
