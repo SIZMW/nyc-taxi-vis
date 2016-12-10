@@ -104,10 +104,14 @@ $(function () {
           zone1.forEach(function (zone2, zone2Idx) {
             var datum = zone2;
             minTaxiTime = Math.min(minTaxiTime, getTaxiAttr(datum, 'time'));
-            if (getTaxiAttr(datum, 'time') == 1396.1333333333334) {
-              console.log(monthIdx, zone1Idx, zone2Idx);
+            
+            // TODO Remove this
+            if (getTaxiAttr(datum, 'time') > 240) {
+              console.log(monthIdx + 1, zone1Idx + 1, zone2Idx + (zone1Idx + 1) + 1, datum);
             }
-            maxTaxiTime = Math.max(maxTaxiTime, getTaxiAttr(datum, 'time'));
+
+            // TODO Remove this
+            maxTaxiTime = Math.max(maxTaxiTime, 240 /*getTaxiAttr(datum, 'time')*/ );
           });
         });
       });
