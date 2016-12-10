@@ -1,4 +1,4 @@
-CS 573 Final Project: Final Project
+NYC Taxi Data Visualization
 ===================================
 
 Team:
@@ -6,8 +6,10 @@ Team:
 * [Aditya Nivarthi](https://github.com/SIZMW)
 
 ## Description
+This visualization aims to show insights into taxi trip data across predefined taxi zones in New York City.
 
 ## Resources
+* [SVG gradient scales](http://www.visualcinnamon.com/2016/05/smooth-color-legend-d3-svg-gradient.html)
 
 ## Usage
-Our visualization can be seen [here](https://sizmw.github.io/data-vis-final/).
+The visualization can be seen [here](https://sizmw.github.io/data-vis-final/).
