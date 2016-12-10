@@ -192,6 +192,62 @@ $(function () {
           });
       }
 
+      function addGradientScale() {
+        var defs = canvas.append('defs');
+
+        var gradient = defs.append('linearGradient')
+          .attr('id', 'gradient-scale');
+
+var scaleWidth = 20;
+          var scaleHeight = 200;
+          var minToHrConvert = 60;
+
+          var legendScale = d3.scalePoint()
+            .domain([minTaxiTime / minToHrConvert, maxTaxiTime / minToHrConvert])
+            .range([canvasHeight / 2 +scaleHeight / 2 - 1, canvasHeight / 2 - scaleHeight / 2])
+
+            var axis = d3.axisLeft(legendScale);
+            axis.tickFormat(function(d, i) {
+              return d + ' hrs';
+            });
+
+
+
+
+        gradient
+          .attr("x1", "0%")
+          .attr("y1", "0%")
+          .attr("x2", "0%")
+          .attr("y2", "100%");
+
+        gradient.append("stop") 
+          .attr("offset", "0%")
+          .attr('stop-opacity', 0.0)
+          .attr("stop-color", "darkgreen");
+
+        gradient.append("stop") 
+          .attr("offset", "100%")
+          .attr('stop-opacity', 1.0)
+          .attr("stop-color", "darkgreen");
+
+        canvas.append('rect')
+          .attr('class', 'legend')
+          .attr('x', Math.floor(canvasWidth - (margin.right * 2)))
+          .attr('y', canvasHeight / 2 - scaleHeight / 2)
+          .attr('width', scaleWidth)
+          .attr('height', scaleHeight)
+          .attr('stroke', 'black')
+          .attr('stroke-width', 0)
+          .style('fill', 'url(#gradient-scale)');
+
+                      canvas
+              .append('g')
+              .classed('legend-axis', true)
+              .attr('transform', 'translate(' +  Math.floor(canvasWidth - (margin.right * 2))+ ',0)')
+              .attr('stroke-width', 1)
+              .call(axis);
+      }
+
       function tooltipZoneMouseOver(d) {
         tooltipMouseOver(d, d.properties['zone'] + ', ' + d.properties['borough'] + ' (' + d.properties['LocationID'] + ')');
       }
@@ -226,6 +282,7 @@ $(function () {
       }
 
       updateCanvas(0, null);
+      addGradientScale();
     });
   });
 
