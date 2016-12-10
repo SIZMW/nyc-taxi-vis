@@ -111,7 +111,7 @@ def process_data(data_folder, zones_path, output_path):
     Returns: N/A
     """
 
-    record_skip = 1200
+    record_skip = 120
 
     zones = process_zones(zones_path)
 
