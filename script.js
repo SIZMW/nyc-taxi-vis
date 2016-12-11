@@ -51,12 +51,17 @@ $(function () {
     attrName: 'time',
     minValue: 5,
     title: 'Travel Time',
-    description: 'some <b>HTML</b>'
+    description: '<p>One of the most important aspects of a taxi trip is how long it takes. Using the aggregated information, we have been able to compute average taxi trip times between taxi zones.' +
+      'These values are based on trip times for trips that began or ended in the selected zone. For passengers, this provides a metric of how much time is required to travel between zones in ' +
+      'the city.</p> <p>For taxi drivers, it provides the same metric, but it goes one step further. With average times between taxi zones, we can get an understanding of the areas with the ' +
+      'most congestion. In contrast, we also see areas that are easier to travel to and from.</p><p>The ranges in travel time provide an understanding of the distribution of taxi trips ' +
+      'between zones, and the amount of time required to make those trips to various parts of the city.</p><p>We take this analysis one step further in the next visualization, using data ' +
+      'regarding taxi fares for these same trips.</p>'
   }, {
     attrName: 'fare',
     minValue: 10,
     title: 'Trip Fare',
-    description: 'some <b>HTML</b>'
+    description: ''
   }, {
     attrName: 'count',
     minValue: 1,
