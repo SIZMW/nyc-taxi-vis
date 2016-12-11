@@ -26,10 +26,25 @@ $(function () {
   // Update month name display
   var $monthInput = $('#month-input');
   var $monthNameLabel = $('#month-name-label');
+
   $monthInput.change(function () {
     $monthNameLabel.text(MONTH_NAMES[+$monthInput.val()]);
   });
+
   $monthNameLabel.text(MONTH_NAMES[+$monthInput.val()]);
+
+  // Add mouse handlers for slider
+  $monthInput.mouseover(function (eventData) {
+    tooltipSliderMouseOver(null, eventData);
+  });
+
+  $monthInput.mousemove(function (eventData) {
+    tooltipSliderMouseMove(null, eventData);
+  });
+
+  $monthInput.mouseout(function (eventData) {
+    tooltipMouseOut(null);
+  });
 
   // Global definition for each map view
   var TAXI_MAP_ATTRS = [{
@@ -438,36 +453,11 @@ $(function () {
         }
 
         function tooltipZoneMouseOver(d) {
-          tooltipMouseOver(d, tooltipText(d));
+          tooltipMouseOver(d, d3.event, tooltipText(d));
         }
 
         function tooltipZoneMouseMove(d) {
-          tooltipMouseMove(d, tooltipText(d));
-        }
-
-        function tooltipMouseOver(d, text) {
-          tooltip
-            .style('top', (d3.event.pageY - 20) + 'px')
-            .style('left', (d3.event.pageX) + 'px')
-            .text(text);
-
-          tooltip.transition()
-            .duration(100)
-            .style('opacity', 1)
-        }
-
-        function tooltipMouseMove(d, text) {
-          tooltip
-            .style('top', (d3.event.pageY - 20) + 'px')
-            .style('left', (d3.event.pageX) + 'px')
-            .text(text);
-        }
-
-        function tooltipMouseOut(d) {
-          tooltip
-            .transition()
-            .duration(100)
-            .style('opacity', 0)
+          tooltipMouseMove(d, d3.event, tooltipText(d));
         }
 
         // Update on load
@@ -499,4 +489,45 @@ $(function () {
   var tooltip = d3.select('body')
     .append('div')
     .attr('class', 'tooltip');
+
+  function tooltipSliderMouseOver(d, event) {
+    tooltipMouseOver(d, event, MONTH_NAMES[+$monthInput.val()]);
+  }
+
+  function tooltipSliderMouseMove(d, event) {
+    tooltipMouseMove(d, event, MONTH_NAMES[+$monthInput.val()]);
+  }
+
+  function tooltipMouseOver(d, event, text) {
+    if (event == undefined) {
+      event = d3.event;
+    }
+
+    tooltip
+      .style('top', (event.pageY - 20) + 'px')
+      .style('left', (event.pageX) + 'px')
+      .text(text);
+
+    tooltip.transition()
+      .duration(100)
+      .style('opacity', 1)
+  }
+
+  function tooltipMouseMove(d, event, text) {
+    if (event == undefined) {
+      event = d3.event;
+    }
+
+    tooltip
+      .style('top', (event.pageY - 20) + 'px')
+      .style('left', (event.pageX) + 'px')
+      .text(text);
+  }
+
+  function tooltipMouseOut(d) {
+    tooltip
+      .transition()
+      .duration(100)
+      .style('opacity', 0)
+  }
 });
