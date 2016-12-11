@@ -152,6 +152,10 @@ $(function () {
       $('#maps')
         .empty();
 
+      // Enable slider view
+      $('#month-controls')
+        .css('visibility', 'visible');
+
       // Get update functions for each SVG canvas
       var updateCanvasFcns = TAXI_MAP_ATTRS.map(function (mapAttrData) {
         var mapAttrName = mapAttrData.attrName;
