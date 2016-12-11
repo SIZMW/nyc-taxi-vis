@@ -61,7 +61,14 @@ $(function () {
     attrName: 'fare',
     minValue: 10,
     title: 'Trip Fare',
-    description: ''
+    description: '<p>Aside from taxi trip times, it is important that passengers understand how much using a taxi costs, or for drivers, how much a taxi fare will earn in money.</p><p>Knowing average' +
+      ' fares between areas in the city is important for taxi drivers to estimate earnings of a fare. It also becomes important when analyzing the fares the any given drivere may choose. ' +
+      'Putting average fare data in conjunction with average trip times can help drivers get insight into how valuable certain taxi fares may be.</p><p>For example, knowing a fare from ' +
+      '<a href="https://www.google.com/maps/place/Rosedale,+Queens,+NY/@40.6597497,-73.7618634,14z/data=!3m1!4b1!4m5!3m4!1s0x89c26421ae3bbc79:0x850c6aab64929eba!8m2!3d40.6584068!4d-73.7389596">' +
+      'Rosedale, Queens</a> to <a href="https://www.google.com/maps/place/Whitestone,+Queens,+NY/@40.7870801,-73.8267491,14z/data=!3m1!4b1!4m5!3m4!1s0x89c28aedbd3e263f:0xba6ad843be111724!8m2!3d40.7920449!4d-73.8095574">' +
+      'Whitestone, Queens</a> averages around $40.00, and takes approximately 30 minutes, can help a driver decide if that fare is earning enough for the amount of time required to complete it. This visualization ' +
+      'can provide some insight for drivers on which trips are the most valuable in terms of the earned fare.</p><p>For passengers, this visualization is a means to estimate how much traveling between two zones ' +
+      'can cost. The average fares can help taxi users budget their time and money for trips that may cost too much for them to afford, especially as a primary means of transportation.</p>'
   }, {
     attrName: 'count',
     minValue: 1,
