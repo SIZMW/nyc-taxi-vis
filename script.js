@@ -31,26 +31,23 @@ $(function () {
   });
   $monthNameLabel.text(MONTH_NAMES[+$monthInput.val()]);
 
-  var TAXI_MAP_ATTRS = [
-    {
-      attrName: 'time',
-      minValue: 5,
-      title: 'Travel Time',
-      description: 'some <b>HTML</b>'
-    },
-    {
-      attrName: 'fare',
-      minValue: 10,
-      title: 'Trip Fare',
-      description: 'some <b>HTML</b>'
-    },
-    {
-      attrName: 'count',
-      minValue: 1,
-      title: 'Trip Frequency',
-      description: 'some <b>HTML</b>'
-    }
-    ];
+  // Global definition for each map view
+  var TAXI_MAP_ATTRS = [{
+    attrName: 'time',
+    minValue: 5,
+    title: 'Travel Time',
+    description: 'some <b>HTML</b>'
+  }, {
+    attrName: 'fare',
+    minValue: 10,
+    title: 'Trip Fare',
+    description: 'some <b>HTML</b>'
+  }, {
+    attrName: 'count',
+    minValue: 1,
+    title: 'Trip Frequency',
+    description: 'some <b>HTML</b>'
+  }];
 
   // Margin amounts
   var margin = {
@@ -136,22 +133,33 @@ $(function () {
       var selectedMonth = 0;
       var selectedZone = 132;
 
-      $('#maps').empty();
+      // Clear maps div on load
+      $('#maps')
+        .empty();
+
+      // Get update functions for each SVG canvas
       var updateCanvasFcns = TAXI_MAP_ATTRS.map(function (mapAttrData) {
         var mapAttrName = mapAttrData.attrName;
 
+        // Add map to body
         var $mapBody = $('<div></div>')
           .addClass('map-body')
           .addClass(mapAttrName);
 
-        $mapBody.append($('<h2></h2>').text(mapAttrData.title));
+        // Add title text
+        $mapBody.append($('<h2></h2>')
+          .text(mapAttrData.title));
 
+        // Add SVG
         var $canvas = $('<svg width="700pt" height="500pt"></svg>');
         $mapBody.append($canvas);
 
-        $mapBody.append($('<div class="map-description"></div>').html(mapAttrData.description));
+        // Add description text
+        $mapBody.append($('<div class="map-description"></div>')
+          .html(mapAttrData.description));
 
-        $('#maps').append($mapBody);
+        $('#maps')
+          .append($mapBody);
 
         var canvas = d3.select($canvas[0]);
         var canvasWidth = $canvas.width();
@@ -170,7 +178,7 @@ $(function () {
                 if (attrValue > 0) {
                   minTaxiAttr = Math.min(minTaxiAttr, attrValue);
 
-                  // TODO Remove this
+                  // Clamp values of attributes
                   maxTaxiAttr = Math.max(maxTaxiAttr,
                     mapAttrName === 'time' ? 240 :
                     mapAttrName === 'fare' ? 200 :
@@ -181,6 +189,7 @@ $(function () {
           });
         });
 
+        // Draw map zones
         var geoPath = d3.geoPath(d3.geoMercator()
           .fitExtent([
             [margin.left, margin.top],
@@ -217,6 +226,7 @@ $(function () {
           updateAllCanvases();
         });
 
+        // Data attribute scale
         var attrScale = d3.scaleLog()
           .domain([mapAttrData.minValue, maxTaxiAttr])
           .range([0.1, 1.0]);
@@ -241,13 +251,24 @@ $(function () {
               return selectedZone !== null && selectedZone !== locID && !getTaxiAttr(getTaxiDatum(selectedMonth, selectedZone, locID), 'count');
             });
 
+          // Set zone opacity
           zones.select('path')
             .attr('fill-opacity', function (d) {
               var locID = d.properties['LocationID'];
+
+              // No zone selected
               if (selectedZone === null) return 0.2;
+
+              // Selected zone
               if (selectedZone === locID) return 1.0;
+
+              // Get data
               var taxiDatum = getTaxiDatum(selectedMonth, selectedZone, locID);
+
+              // No data
               if (!getTaxiAttr(taxiDatum, 'count')) return 0.2;
+
+              // Get appropriate attribute value
               var attrValue = getTaxiAttr(taxiDatum, mapAttrName);
               return attrScale(attrValue);
             });
@@ -257,7 +278,6 @@ $(function () {
          * Adds the color scale based on color gradient of zones.
          */
         function addGradientScale() {
-
           var scaleWidth = 20;
           var scaleHeight = 200;
 
@@ -267,15 +287,19 @@ $(function () {
             .range([canvasHeight / 2 - scaleHeight / 2, canvasHeight / 2 + scaleHeight / 2 - 1])
 
           var axis = d3.axisLeft(legendScale);
+
+          // Time map
           if (mapAttrName === 'time') {
             axis.tickValues([5, 15, 30, 60, 120, 180, 240])
             axis.tickFormat(function (d) {
+              // Set tick unit labels
               if (d < 60) return d + ' min' + (d == 1 ? '' : 's');
               else return (d / 60) + ' hr' + (d == 60 ? '' : 's');
             });
-          }
-          else if (mapAttrName === 'fare') {
+          } else if (mapAttrName === 'fare') {
             var ticks = [];
+
+            // Add multiples of 1, 2, 5 to the tick values on log scale
             for (var i = Math.floor(Math.log10(mapAttrData.minValue)); i < Math.log10(maxTaxiAttr); i++) {
               if (Math.pow(10, i) >= mapAttrData.minValue && Math.pow(10, i) <= maxTaxiAttr) {
                 ticks.push(Math.pow(10, i));
@@ -287,13 +311,17 @@ $(function () {
                 ticks.push(5 * Math.pow(10, i));
               }
             }
+
             axis.tickValues(ticks);
+
+            // Format to USD units
             axis.tickFormat(function (d) {
               return '$' + Math.round(d);
             });
-          }
-          else if (mapAttrName === 'count') {
+          } else if (mapAttrName === 'count') {
             var ticks = [];
+
+            // Add multiples of 1, 2, 5 to the tick values on log scale
             for (var i = Math.floor(Math.log10(mapAttrData.minValue)); i < Math.log10(maxTaxiAttr); i++) {
               if (Math.pow(10, i) >= mapAttrData.minValue && Math.pow(10, i) <= maxTaxiAttr) {
                 ticks.push(Math.pow(10, i));
@@ -305,7 +333,10 @@ $(function () {
                 ticks.push(5 * Math.pow(10, i));
               }
             }
+
             axis.tickValues(ticks);
+
+            // Format normally
             axis.tickFormat(function (d) {
               return d;
             });
@@ -328,12 +359,10 @@ $(function () {
           gradient.append('stop')
             .attr('offset', '0%')
             .attr('stop-opacity', attrScale.range()[0]);
-            // .attr('stop-color', 'darkgreen');
 
           gradient.append('stop')
             .attr('offset', '100%')
             .attr('stop-opacity', attrScale.range()[1]);
-            // .attr('stop-color', 'darkgreen');
 
           // Add scale rectangles
           canvas.append('rect')
@@ -354,41 +383,58 @@ $(function () {
             .call(axis);
         }
 
+        /**
+         * Generates the tooltip text based on the view type.
+         *
+         * @param d The object being hovered over.
+         * @return the display string
+         */
         function tooltipText(d) {
           var attrstr = null;
+
+          // There is a selected zone and we are not hovering over itself
           if (selectedZone !== null && selectedZone !== d.properties['LocationID']) {
             var datum = getTaxiDatum(selectedMonth, selectedZone, d.properties['LocationID']);
             var attrValue = getTaxiAttr(datum, mapAttrName);
+
+            // Not the frequency map
             if (mapAttrName !== 'count') {
               if (getTaxiAttr(datum, 'count')) {
+                // Parse the time
                 if (mapAttrName === 'time') {
                   attrValue = Math.floor(attrValue);
                   var mins = attrValue % 60;
                   var hours = Math.floor(attrValue / 60);
                   attrstr = '';
+
+                  // Display hours if present
                   if (hours > 0) {
                     attrstr = hours + ' hr' + (hours === 1 ? '' : 's');
                   }
+
+                  // Add space between hours and minutes
                   if (hours > 0 && mins > 0) {
                     attrstr += ' ';
                   }
+
+                  // Display minutes if present or if no hours
                   if (mins > 0 || hours === 0) {
                     attrstr += mins + ' min' + (mins === 1 ? '' : 's');
                   }
-                }
-                else if (mapAttrName === 'fare') {
-                  attrstr = '$' + (Math.round(attrValue * 100) / 100).toFixed(2);
+                } else if (mapAttrName === 'fare') {
+                  // Show fare average
+                  attrstr = '$' + (Math.round(attrValue * 100) / 100)
+                    .toFixed(2);
                 }
               }
-            }
-            else {
+            } else {
               attrstr = attrValue;
             }
           }
           return d.properties['zone'] +
-                 ', ' +
-                 d.properties['borough'] +
-                 (attrstr ? ' (' + attrstr + ')' : '');
+            ', ' +
+            d.properties['borough'] +
+            (attrstr ? ' (' + attrstr + ')' : '');
         }
 
         function tooltipZoneMouseOver(d) {
@@ -424,12 +470,17 @@ $(function () {
             .style('opacity', 0)
         }
 
+        // Update on load
         updateCanvas(0, null);
         addGradientScale();
 
+        // Return update function
         return updateCanvas;
       });
 
+      /**
+       * Updates all of the SVG elements on the page.
+       */
       function updateAllCanvases() {
         updateCanvasFcns.forEach(function (updateCanvas) {
           updateCanvas();
