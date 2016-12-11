@@ -31,6 +31,12 @@ All the previously mentioned visualizations can be filtered by month during the 
 ### Data Source
 The raw data used in this visualization was gathered from the [here](http://www.nyc.gov/html/tlc/html/about/trip_record_data.shtml).
 
+#### Processing The Data
+From this data source, we determined it would be infeasible to aggregate all of the data (approximately 200GB) into a condensed version that could be used on the visualization. Instead, to get a reasonable distribution, we took the data from July 2015 to June 2016 and ran our processing script to generate our data file. This processing was done over the course of three days on a [Microsoft Azure](https://azure.microsoft.com/en-us/) virtual machine instance.
+
+#### Problems With The Data
+While the data is still representative of the trends in all of the original data, there are still gaps in the distribution of taxi trips that we were able to aggregate. Some zones do not have data to other zones, or are skewed due to insufficient data. This is especially apparent on the [Trip Frequency](https://github.com/SIZMW/nyc-taxi-vis#trip-frequency) map, where some zones only have one trip's worth of data.
+
 ## Resources
 * [SVG gradient scales](http://www.visualcinnamon.com/2016/05/smooth-color-legend-d3-svg-gradient.html)
 
