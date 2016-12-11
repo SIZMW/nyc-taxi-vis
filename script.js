@@ -62,18 +62,26 @@ $(function () {
     minValue: 10,
     title: 'Trip Fare',
     description: '<p>Aside from taxi trip times, it is important that passengers understand how much using a taxi costs, or for drivers, how much a taxi fare will earn in money.</p><p>Knowing average' +
-      ' fares between areas in the city is important for taxi drivers to estimate earnings of a fare. It also becomes important when analyzing the fares the any given drivere may choose. ' +
+      ' fares between areas in the city is important for taxi drivers to estimate earnings of a fare. It also becomes important when analyzing the fares the any given driver may choose. ' +
       'Putting average fare data in conjunction with average trip times can help drivers get insight into how valuable certain taxi fares may be.</p><p>For example, knowing a fare from ' +
-      '<a href="https://www.google.com/maps/place/Rosedale,+Queens,+NY/@40.6597497,-73.7618634,14z/data=!3m1!4b1!4m5!3m4!1s0x89c26421ae3bbc79:0x850c6aab64929eba!8m2!3d40.6584068!4d-73.7389596">' +
-      'Rosedale, Queens</a> to <a href="https://www.google.com/maps/place/Whitestone,+Queens,+NY/@40.7870801,-73.8267491,14z/data=!3m1!4b1!4m5!3m4!1s0x89c28aedbd3e263f:0xba6ad843be111724!8m2!3d40.7920449!4d-73.8095574">' +
-      'Whitestone, Queens</a> averages around $40.00, and takes approximately 30 minutes, can help a driver decide if that fare is earning enough for the amount of time required to complete it. This visualization ' +
-      'can provide some insight for drivers on which trips are the most valuable in terms of the earned fare.</p><p>For passengers, this visualization is a means to estimate how much traveling between two zones ' +
-      'can cost. The average fares can help taxi users budget their time and money for trips that may cost too much for them to afford, especially as a primary means of transportation.</p>'
+      '<a href="https://www.google.com/maps/dir/JFK+Airport,+NY/Whitestone,+Queens,+NY/@40.7165933,-73.9274732,11z/data=!3m1!4b1!4m13!4m12!1m5!1m1!1s0x89c26650d5404947:0xec4fb213489f11f0!2m2!1d-73.7781391!2d40.6413111!1m5!1m1!1s0x89c28aedbd3e263f:0xba6ad843be111724!2m2!1d-73.8095574!2d40.7920449">' +
+      'JFK Airport, Queens to Whitestone, Queens</a> averages around $40.00, and takes approximately 25 minutes, can help a driver decide if that fare is earning enough for the amount of time ' +
+      'required to complete it. This visualization can provide some insight for drivers on which trips are the most valuable in terms of the earned fare.</p><p>For passengers, this visualization ' +
+      'is a means to estimate how much traveling between two zones can cost. The average fares can help taxi users budget their time and money for trips that may cost too much for them to afford, ' +
+      'especially as a primary means of transportation.</p><p>This analysis can be taken further with a distribution map of trip origins and destinations across the city, as shown below.</p>'
   }, {
     attrName: 'count',
     minValue: 1,
     title: 'Trip Frequency',
-    description: 'some <b>HTML</b>'
+    description: '<p>In this visualization, we show frequencies of origins and destinations for a specific zone. In short terms, this means that given a zone, we encode the color of other zones based on' +
+      ' how often one of the two zones in a pair was the origin or destination of a taxi ride. These frequencies are based on counts of how many taxi trips we found in the original data that met the previously' +
+      ' described conditions.</p><p>Taxi passengers can take this information into use when planning trips into or out of certain zones in the city. Zones that have higher frequencies have a higher probability' +
+      ' of taxi presence, meaning travel in or out should be more accessible. However, this presence is based on the fact that there is a higher amount of people using taxis as their means of transportation, ' +
+      'leading to a higher demand for taxis in that area.</p><p>Drivers can use the frequency map in understanding that given a taxi zone, how likely is it that a fare they pick up will take them to another ' +
+      'specific zone. Combining this information with the fare price map, drivers can make better choices in the fares that they decide to pursue. If a specific fare between two zones pays well for the amount ' +
+      'of time needed to complete it, but the likelihood of that fare happening is rare, it may not be worth the effort to prioritize serving that specific fare.</p><p>Overall, this view of the data helps the ' +
+      'general viewers visualize which areas of the city have the largest dependence on taxis as a means of transportation. It provides insight into the usage of taxis around NYC, and may help in making ' +
+      'changes to taxi rules and regulations depending on the needs of the people.</p>'
   }];
 
   // Margin amounts
