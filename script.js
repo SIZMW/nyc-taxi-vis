@@ -146,7 +146,7 @@ $(function () {
 
         $mapBody.append($('<h2></h2>').text(mapAttrData.title));
 
-        var $canvas = $('<svg width="800pt" height="500pt"></svg>');
+        var $canvas = $('<svg width="700pt" height="500pt"></svg>');
         $mapBody.append($canvas);
 
         $mapBody.append($('<div class="map-description"></div>').html(mapAttrData.description));
