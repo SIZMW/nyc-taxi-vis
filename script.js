@@ -53,11 +53,12 @@ $(function () {
 
   $(window).on('scroll', function(eventData) {
     var scrollTop = $(window).scrollTop();
-    $monthSelector.stop(false, false).animate({
+    $monthSelector.stop(true, true).animate({
       top: scrollTop < originalY
         ? 0
         : scrollTop - originalY + margin.top
-      }, 300);
+      }, 0);
+    $monthSelector.finish();
   });
 
   // Global definition for each map view
