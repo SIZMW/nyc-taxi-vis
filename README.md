@@ -26,6 +26,8 @@ This visualization shows taxi zones and the average fare cost to the passenger(s
 This visualization shows the number of trips to or from a selected zone to or from any other given zone. The goal is to show frequencies of trips being made between zones, specifically show popular trips (for example, airport to major landmark). For taxi drivers, it provides insight into taxi fares that have a higher chance of happening, and understanding which fares are more available to complete.
 
 #### Time Of Year
+![Month Selector](img/month-selector.png)
+
 All the previously mentioned visualizations can be filtered by month during the year, which provides insight into how travel habits in taxis change over the course of a year.
 
 ### Data Source
@@ -39,6 +41,7 @@ While the data is still representative of the trends in all of the original data
 
 ## Resources
 * [SVG gradient scales](http://www.visualcinnamon.com/2016/05/smooth-color-legend-d3-svg-gradient.html)
+* [Scrolling content along page](http://stackoverflow.com/questions/2177983/how-to-make-div-follow-scrolling-smoothly-with-jquery)
 
 ## Usage
 The visualization can be seen [here](https://sizmw.github.io/nyc-taxi-vis/).
