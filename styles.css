@@ -25,6 +25,23 @@ body {
   font-size: 14pt;
 }
 
+#month-selector {
+  display: inline-block;
+  box-shadow: 0 0 0.2em black;
+  margin: 0.3em;
+  padding-right: 1em;
+  padding-left: 1em;
+  padding-top: 0.25em;
+  padding-bottom: 1em;
+  background-color: white;
+}
+
+#month-name-label {
+  float: left;
+  width: 100px;
+  max-width: 100px;
+}
+
 .map-body {
   margin-top: 40pt;
   margin-bottom: 3em;

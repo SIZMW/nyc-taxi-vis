@@ -26,6 +26,7 @@ $(function () {
   // Update month name display
   var $monthInput = $('#month-input');
   var $monthNameLabel = $('#month-name-label');
+  var $monthSelector = $('#month-selector');
 
   $monthInput.change(function () {
     $monthNameLabel.text(MONTH_NAMES[+$monthInput.val()]);
@@ -44,6 +45,19 @@ $(function () {
 
   $monthInput.mouseout(function (eventData) {
     tooltipMouseOut(null);
+  });
+
+  // Enable month selector to scroll with page
+  $monthSelector.css('position', 'relative');
+  var originalY = $monthSelector.offset().top;
+
+  $(window).on('scroll', function(eventData) {
+    var scrollTop = $(window).scrollTop();
+    $monthSelector.stop(false, false).animate({
+      top: scrollTop < originalY
+        ? 0
+        : scrollTop - originalY + margin.top
+      }, 300);
   });
 
   // Global definition for each map view
@@ -173,7 +187,7 @@ $(function () {
         .empty();
 
       // Enable slider view
-      $('#month-controls')
+      $monthSelector
         .css('visibility', 'visible');
 
       // Get update functions for each SVG canvas
