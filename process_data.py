@@ -111,7 +111,7 @@ def process_data(data_folder, zones_path, output_path):
     Returns: N/A
     """
 
-    record_skip = 120
+    record_skip = 60
 
     zones = process_zones(zones_path)
 
@@ -159,7 +159,7 @@ def process_data(data_folder, zones_path, output_path):
     zone_data = [[[ZoneDatum() for zone2 in range(zone1 + 1, len(zones))] for zone1 in range(len(zones) - 1)] for _ in range(12)]
 
     print('Creating processing pool...')
-    processing_pool = ThreadPoolExecutor(max_workers=4)
+    processing_pool = ThreadPoolExecutor(max_workers=None)
 
     print('Processing records...')
     loading_bar_init(record_count)
