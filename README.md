@@ -28,6 +28,9 @@ This visualization shows the number of trips to or from a selected zone to or fr
 #### Time Of Year
 ![Month Selector](img/month-selector.png)
 
+#### Taxi Zone Tooltip
+![Taxi Zone Tooltip](img/tooltip.png)
+
 All the previously mentioned visualizations can be filtered by month during the year, which provides insight into how travel habits in taxis change over the course of a year.
 
 ### Data Source
