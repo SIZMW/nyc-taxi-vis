@@ -54,7 +54,7 @@ $(function () {
   $(window).on('scroll', function(eventData) {
     var scrollTop = $(window).scrollTop();
     var floating = scrollTop >= originalY;
-    $monthSelector.stop(true, true).animate({ top: floating ? scrollTop - originalY - 30 : 0 }, 0);
+    $monthSelector.stop(true, true).animate({ top: floating ? scrollTop - originalY + 10 : 0 }, 0);
     $monthSelector.toggleClass('floating', floating);
     $monthSelector.finish();
   });
@@ -184,10 +184,6 @@ $(function () {
       // Clear maps div on load
       $('#maps')
         .empty();
-
-      // Enable slider view
-      $monthSelector
-        .css('visibility', 'visible');
 
       // Get update functions for each SVG canvas
       var updateCanvasFcns = TAXI_MAP_ATTRS.map(function (mapAttrData) {
