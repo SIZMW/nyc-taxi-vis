@@ -473,44 +473,45 @@ $(function () {
             var datum = getTaxiDatum(selectedMonth, selectedZone, d.properties['LocationID']);
             var attrValue = getTaxiAttr(datum, mapAttrName);
 
-            // Not the frequency map
-            if (mapAttrName !== 'count') {
-              if (getTaxiAttr(datum, 'count')) {
-                // Parse the time
-                if (mapAttrName === 'time') {
-                  attrValue = Math.floor(attrValue);
-                  var mins = attrValue % 60;
-                  var hours = Math.floor(attrValue / 60);
-                  attrstr = '';
+            if (getTaxiAttr(datum, 'count')) {
+              // Parse the time
+              if (mapAttrName === 'time') {
+                attrValue = Math.floor(attrValue);
+                var mins = attrValue % 60;
+                var hours = Math.floor(attrValue / 60);
+                attrstr = '';
 
-                  // Display hours if present
-                  if (hours > 0) {
-                    attrstr = hours + ' hr' + (hours === 1 ? '' : 's');
-                  }
-
-                  // Add space between hours and minutes
-                  if (hours > 0 && mins > 0) {
-                    attrstr += ' ';
-                  }
-
-                  // Display minutes if present or if no hours
-                  if (mins > 0 || hours === 0) {
-                    attrstr += mins + ' min' + (mins === 1 ? '' : 's');
-                  }
-                } else if (mapAttrName === 'fare') {
-                  // Show fare average
-                  attrstr = '$' + (Math.round(attrValue * 100) / 100)
-                    .toFixed(2);
+                // Display hours if present
+                if (hours > 0) {
+                  attrstr = hours + ' hr' + (hours === 1 ? '' : 's');
                 }
+
+                // Add space between hours and minutes
+                if (hours > 0 && mins > 0) {
+                  attrstr += ' ';
+                }
+
+                // Display minutes if present or if no hours
+                if (mins > 0 || hours === 0) {
+                  attrstr += mins + ' min' + (mins === 1 ? '' : 's');
+                }
+              } else if (mapAttrName === 'fare') {
+                // Show fare average
+                attrstr = '$' + (Math.round(attrValue * 100) / 100)
+                  .toFixed(2);
               }
-            } else {
-              attrstr = attrValue;
+              else if (mapAttrName === 'count') {
+                attrstr = attrValue;
+              }
+            }
+            else {
+              attrstr = 'No Data';
             }
           }
           return d.properties['zone'] +
             ', ' +
             d.properties['borough'] +
-            (attrstr ? ' (' + attrstr + ')' : ' (No Data)');
+            (attrstr !== null ? ' (' + attrstr + ')' : '');
         }
 
         function tooltipZoneMouseOver(d) {
