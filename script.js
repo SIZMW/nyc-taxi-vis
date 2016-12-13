@@ -53,11 +53,9 @@ $(function () {
 
   $(window).on('scroll', function(eventData) {
     var scrollTop = $(window).scrollTop();
-    $monthSelector.stop(true, true).animate({
-      top: scrollTop < originalY
-        ? 0
-        : scrollTop - originalY + margin.top
-      }, 0);
+    var floating = scrollTop >= originalY;
+    $monthSelector.stop(true, true).animate({ top: floating ? scrollTop - originalY - 30 : 0 }, 0);
+    $monthSelector.toggleClass('floating', floating);
     $monthSelector.finish();
   });
 
@@ -311,7 +309,7 @@ $(function () {
               var locID = d.properties['LocationID'];
 
               // No zone selected
-              if (selectedZone === null) return 0.3;
+              if (selectedZone === null) return 0.1;
 
               // Selected zone
               if (selectedZone === locID) return 1.0;

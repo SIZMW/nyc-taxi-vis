@@ -34,12 +34,20 @@ body {
   padding-top: 0.25em;
   padding-bottom: 1em;
   background-color: white;
+  opacity: 1.0;
+}
+
+#month-selector.floating {
+  opacity: 0.5;
+}
+
+#month-selector:hover {
+  opacity: 1.0;
 }
 
 #month-name-label {
   float: left;
   width: 100px;
-  max-width: 100px;
 }
 
 .map-body {
