@@ -54,7 +54,7 @@ $(function () {
   $(window).on('scroll', function(eventData) {
     var scrollTop = $(window).scrollTop();
     var floating = scrollTop >= originalY;
-    $monthSelector.stop(true, true).animate({ top: floating ? scrollTop - originalY - 30 : 0 }, 0);
+    $monthSelector.stop(true, true).animate({ top: floating ? scrollTop - originalY + 10 : 0 }, 0);
     $monthSelector.toggleClass('floating', floating);
     $monthSelector.finish();
   });
