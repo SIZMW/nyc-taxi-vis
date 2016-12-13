@@ -283,7 +283,7 @@ $(function () {
         // Data attribute scale
         var attrScale = d3.scaleLog()
           .domain([mapAttrData.minValue, maxTaxiAttr])
-          .range([0.1, 1.0]);
+          .range([0.05, 1.0]);
 
         /**
          * Selects a specific zone based on the ID and updates the maximum attribute value.
@@ -311,7 +311,7 @@ $(function () {
               var locID = d.properties['LocationID'];
 
               // No zone selected
-              if (selectedZone === null) return 0.2;
+              if (selectedZone === null) return 0.3;
 
               // Selected zone
               if (selectedZone === locID) return 1.0;
@@ -320,7 +320,7 @@ $(function () {
               var taxiDatum = getTaxiDatum(selectedMonth, selectedZone, locID);
 
               // No data
-              if (!getTaxiAttr(taxiDatum, 'count')) return 0.2;
+              if (!getTaxiAttr(taxiDatum, 'count')) return 0.3;
 
               // Get appropriate attribute value
               var attrValue = getTaxiAttr(taxiDatum, mapAttrName);
@@ -420,7 +420,7 @@ $(function () {
 
           // Add scale rectangles
           canvas.append('rect')
-            .attr('class', 'legend')
+            .classed('legend', true)
             .attr('x', Math.floor(canvasWidth - (margin.right * 2)))
             .attr('y', canvasHeight / 2 - scaleHeight / 2)
             .attr('width', scaleWidth)
@@ -435,6 +435,28 @@ $(function () {
             .attr('transform', 'translate(' + Math.floor(canvasWidth - (margin.right * 2)) + ',0)')
             .attr('stroke-width', 1)
             .call(axis);
+
+          // Add legend item for no data
+          var legendNoData = canvas.append('g')
+            .classed('legend-no-data', true)
+            .attr('transform', 'translate(' + Math.floor(canvasWidth - (margin.right * 2)) + ',' + Math.floor(canvasHeight / 2 + scaleHeight / 2 + 15) + ')');
+
+          legendNoData.append('rect')
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('width', scaleWidth)
+            .attr('height', scaleWidth)
+            .attr('fill', 'black')
+            .attr('fill-opacity', 0.3);
+
+          legendNoData.append('text')
+            .text('No Data')
+            .attr('text-anchor', 'end')
+            .attr('alignment-baseline', 'middle')
+            .attr('x', -5)
+            .attr('y', scaleWidth / 2)
+            .attr('font-family', 'sans-serif')
+            .attr('font-size', 10);
         }
 
         /**
@@ -488,7 +510,7 @@ $(function () {
           return d.properties['zone'] +
             ', ' +
             d.properties['borough'] +
-            (attrstr ? ' (' + attrstr + ')' : '');
+            (attrstr ? ' (' + attrstr + ')' : ' (No Data)');
         }
 
         function tooltipZoneMouseOver(d) {
@@ -527,7 +549,7 @@ $(function () {
   // Tooltip
   var tooltip = d3.select('body')
     .append('div')
-    .attr('class', 'tooltip');
+    .classed('tooltip', true);
 
   function tooltipSliderMouseOver(d, event) {
     tooltipMouseOver(d, event, MONTH_NAMES[+$monthInput.val()]);
